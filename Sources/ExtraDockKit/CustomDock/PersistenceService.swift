@@ -3,8 +3,8 @@ import Foundation
 // MARK: - PersistenceServiceProtocol
 
 protocol PersistenceServiceProtocol: Sendable {
-    func load() throws -> DockConfiguration
-    func save(_ configuration: DockConfiguration) throws
+    func load() throws -> CustomDockConfiguration
+    func save(_ configuration: CustomDockConfiguration) throws
 }
 
 // MARK: - PersistenceService
@@ -23,7 +23,7 @@ final class PersistenceService: PersistenceServiceProtocol, Sendable {
             let appSupport = FileManager.default
                 .urls(for: .applicationSupportDirectory, in: .userDomainMask)
                 .first!
-            let appDirectory = appSupport.appendingPathComponent("Extradock")
+            let appDirectory = appSupport.appendingPathComponent("ExtraDock")
             try? FileManager.default.createDirectory(
                 at: appDirectory,
                 withIntermediateDirectories: true
@@ -37,15 +37,15 @@ final class PersistenceService: PersistenceServiceProtocol, Sendable {
         self.decoder = JSONDecoder()
     }
 
-    func load() throws -> DockConfiguration {
+    func load() throws -> CustomDockConfiguration {
         guard FileManager.default.fileExists(atPath: fileURL.path) else {
-            return DockConfiguration()
+            return CustomDockConfiguration()
         }
         let data = try Data(contentsOf: fileURL)
-        return try decoder.decode(DockConfiguration.self, from: data)
+        return try decoder.decode(CustomDockConfiguration.self, from: data)
     }
 
-    func save(_ configuration: DockConfiguration) throws {
+    func save(_ configuration: CustomDockConfiguration) throws {
         let data = try encoder.encode(configuration)
         try data.write(to: fileURL, options: .atomic)
     }

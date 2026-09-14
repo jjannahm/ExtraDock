@@ -1,25 +1,42 @@
-// DockState.swift
+// MirrorDockState.swift
 import Foundation
 import Observation
 
-// MARK: - DockState
+// MARK: - MirrorDockState
 
+/// The system Dock's contents and settings, shared by every Mirror Dock panel.
+@MainActor
 @Observable
-class DockState {
-    var items: [DockItem] = []
+final class MirrorDockState {
+    var items: [MirrorDockItem] = []
     var tileSize: CGFloat = 49
-    var orientation: String = "bottom"
-    var scale: CGFloat = CGFloat(UserDefaults.standard.object(forKey: "dockScale") as? Double ?? 1.0)
+    var edge: DockEdge = .bottom
 
-    var scaledTileSize: CGFloat { tileSize * scale }
+    /// Separators the system Dock draws between non-empty sections.
+    var separatorCount: Int {
+        let hasPinned = items.contains { $0.section == .pinnedApps }
+        let hasRecent = items.contains { $0.section == .recentApps }
+        let hasOthers = items.contains { $0.section == .persistentOthers }
+        var count = 0
+        if hasPinned && (hasRecent || hasOthers) { count += 1 }
+        if hasRecent && hasOthers { count += 1 }
+        return count
+    }
+
+    func apply(_ configuration: SystemDockConfiguration) {
+        updateItems(configuration.items)
+        tileSize = configuration.tileSize
+        edge = configuration.edge
+    }
 
     // Merges new config items with current running state.
-    // Items already present (by id) retain their isRunning flag;
-    // newly added items get the running flag from the provided set if available.
-    func updateItems(_ newItems: [DockItem]) {
-        // Build a lookup of current running state by path (path is stable across reloads)
+    // Items already present (by path) retain their isRunning flag.
+    func updateItems(_ newItems: [MirrorDockItem]) {
+        // Build a lookup of current running state by path (path is stable across reloads).
+        // The same path can appear twice (e.g. a folder pinned twice), so don't assume uniqueness.
         let runningByPath: [String: Bool] = Dictionary(
-            uniqueKeysWithValues: items.map { ($0.path, $0.isRunning) }
+            items.map { ($0.path, $0.isRunning) },
+            uniquingKeysWith: { first, _ in first }
         )
 
         items = newItems.map { item in

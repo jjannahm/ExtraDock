@@ -4,27 +4,22 @@ import SwiftUI
 
 struct EmptyStateView: View {
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 8) {
             Image(systemName: "square.dashed")
-                .font(.system(size: 32))
+                .font(.system(size: 28))
                 .foregroundStyle(.secondary)
 
             Text("Drop apps here")
                 .font(.headline)
                 .foregroundStyle(.secondary)
 
-            Text("Drag applications, files, or URLs\nfrom Finder to add them.")
+            Text("Drag apps, files, folders, or links\nhere to add them.")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)
         }
-        .padding(20)
-        .frame(minWidth: 200, minHeight: 100)
+        .frame(width: CustomDockLayout.emptySize.width, height: CustomDockLayout.emptySize.height)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Dock is empty. Drag apps here to add them.")
+        .accessibilityLabel("Custom Dock is empty. Drag apps here to add them.")
     }
-}
-
-#Preview {
-    EmptyStateView()
 }

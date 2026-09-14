@@ -5,7 +5,7 @@ import Foundation
 
 @MainActor
 protocol AppIconResolverProtocol {
-    func icon(for item: DockItem) -> NSImage
+    func icon(for item: CustomDockItem) -> NSImage
     func clearCache()
 }
 
@@ -15,7 +15,7 @@ protocol AppIconResolverProtocol {
 final class AppIconResolver: AppIconResolverProtocol {
     private var cache: [String: NSImage] = [:]
 
-    func icon(for item: DockItem) -> NSImage {
+    func icon(for item: CustomDockItem) -> NSImage {
         if let cached = cache[item.path] {
             return cached
         }

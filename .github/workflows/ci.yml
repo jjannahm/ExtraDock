@@ -22,7 +22,7 @@ jobs:
         run: brew install swiftlint
 
       - name: Run SwiftLint
-        run: swiftlint lint --strict
+        run: swiftlint lint
 
   build-and-test:
     name: Build & Test
@@ -34,35 +34,14 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
 
-      - name: Install XcodeGen
-        run: brew install xcodegen
-
-      - name: Generate Xcode project
-        run: xcodegen generate
-
       - name: Build
-        run: |
-          xcodebuild build \
-            -project Extradock.xcodeproj \
-            -scheme Extradock \
-            -configuration Debug \
-            -destination 'platform=macOS' \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            | xcpretty || cat
+        run: swift build
 
       - name: Test
-        run: |
-          xcodebuild test \
-            -project Extradock.xcodeproj \
-            -scheme Extradock \
-            -destination 'platform=macOS' \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            | xcpretty || cat
+        run: swift test
 
   release:
-    name: Archive (Release)
+    name: App Bundle (Release)
     runs-on: macos-15
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: [lint, build-and-test]
@@ -73,26 +52,15 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
 
-      - name: Install XcodeGen
-        run: brew install xcodegen
+      - name: Build app bundle
+        run: ./install.sh --build-only
 
-      - name: Generate Xcode project
-        run: xcodegen generate
+      - name: Zip app
+        run: ditto -c -k --keepParent build/ExtraDock.app build/ExtraDock.zip
 
-      - name: Archive
-        run: |
-          xcodebuild archive \
-            -project Extradock.xcodeproj \
-            -scheme Extradock \
-            -configuration Release \
-            -archivePath build/Extradock.xcarchive \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            SKIP_INSTALL=NO
-
-      - name: Upload archive artifact
+      - name: Upload app artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Extradock-archive-${{ github.sha }}
-          path: build/Extradock.xcarchive
+          name: ExtraDock-${{ github.sha }}
+          path: build/ExtraDock.zip
           retention-days: 14

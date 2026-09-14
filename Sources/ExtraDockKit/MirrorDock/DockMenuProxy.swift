@@ -3,7 +3,8 @@
 import AppKit
 import ApplicationServices
 
-class DockMenuProxy {
+@MainActor
+final class DockMenuProxy {
 
     static let shared = DockMenuProxy()
 
@@ -45,25 +46,6 @@ class DockMenuProxy {
             }
         }
         return menu
-    }
-
-    /// Prefetch menu items for all running apps in background (call on timer)
-    func prefetchMenus(forAppNames names: [String]) {
-        DispatchQueue.global(qos: .background).async { [weak self] in
-            guard let self, AXIsProcessTrusted() else { return }
-            for name in names {
-                if let cached = self.cache[name], Date().timeIntervalSince(cached.date) < self.cacheTTL {
-                    continue // still fresh
-                }
-                if let items = self.readNativeMenuItems(forAppNamed: name), !items.isEmpty {
-                    DispatchQueue.main.async {
-                        self.cache[name] = (items: items, date: Date())
-                    }
-                }
-                // Small delay between apps to avoid rapid Dock menu flashes
-                usleep(200_000)
-            }
-        }
     }
 
     // MARK: - Native menu reading
@@ -160,8 +142,10 @@ class DockMenuProxy {
         escUp?.post(tap: .cghidEventTap)
     }
 
-    /// Re-open native menu and press the item at the given index
-    static func triggerNativeMenuItem(appName: String, index: Int) {
+    /// Re-open native menu and press the item with the given title.
+    /// Menus are cached and their contents change (e.g. "Quit" disappears when an
+    /// app quits), so the title is checked instead of trusting the cached index.
+    static func triggerNativeMenuItem(appName: String, title: String, index: Int) {
         guard let dockItem = findDockItem(named: appName) else { return }
 
         AXUIElementPerformAction(dockItem, kAXShowMenuAction as CFString)
@@ -169,7 +153,10 @@ class DockMenuProxy {
 
         var childrenRef: CFTypeRef?
         guard AXUIElementCopyAttributeValue(dockItem, kAXChildrenAttribute as CFString, &childrenRef) == .success,
-              let children = childrenRef as? [AXUIElement] else { return }
+              let children = childrenRef as? [AXUIElement] else {
+            closeNativeMenu()
+            return
+        }
 
         for child in children {
             var roleRef: CFTypeRef?
@@ -180,17 +167,34 @@ class DockMenuProxy {
             guard AXUIElementCopyAttributeValue(child, kAXChildrenAttribute as CFString, &menuChildrenRef) == .success,
                   let menuChildren = menuChildrenRef as? [AXUIElement] else { continue }
 
-            if index < menuChildren.count {
-                AXUIElementPerformAction(menuChildren[index], kAXPressAction as CFString)
+            let titles = menuChildren.map { element -> String in
+                var titleRef: CFTypeRef?
+                AXUIElementCopyAttributeValue(element, kAXTitleAttribute as CFString, &titleRef)
+                return titleRef as? String ?? ""
+            }
+            if let match = Self.indexToPress(title: title, preferredIndex: index, in: titles) {
+                AXUIElementPerformAction(menuChildren[match], kAXPressAction as CFString)
+            } else {
+                closeNativeMenu()
             }
             return
         }
+        closeNativeMenu()
+    }
+
+    /// The cached index if it still has the expected title, otherwise the first
+    /// item with that title, otherwise nil.
+    nonisolated static func indexToPress(title: String, preferredIndex: Int, in titles: [String]) -> Int? {
+        if titles.indices.contains(preferredIndex), titles[preferredIndex] == title {
+            return preferredIndex
+        }
+        return titles.firstIndex(of: title)
     }
 }
 
 // MARK: - Menu item reference
 
-class MenuItemRef: NSObject {
+final class MenuItemRef: NSObject {
     let appName: String
     let title: String
     let index: Int
@@ -204,13 +208,17 @@ class MenuItemRef: NSObject {
 
 // MARK: - Action handler
 
-class DockMenuActionHandler: NSObject {
+@MainActor
+final class DockMenuActionHandler: NSObject {
     static let shared = DockMenuActionHandler()
 
     @objc func menuItemClicked(_ sender: NSMenuItem) {
         guard let ref = sender.representedObject as? MenuItemRef else { return }
+        let (appName, title, index) = (ref.appName, ref.title, ref.index)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            DockMenuProxy.triggerNativeMenuItem(appName: ref.appName, index: ref.index)
+            MainActor.assumeIsolated {
+                DockMenuProxy.triggerNativeMenuItem(appName: appName, title: title, index: index)
+            }
         }
     }
 }

@@ -1,20 +1,27 @@
 import AppKit
-import Combine
 import Foundation
-import SwiftUI
+import Observation
 
-// MARK: - DockViewModel
+// MARK: - CustomDockViewModel
 
+/// State and actions for the user-curated Custom Dock.
 @MainActor
-final class DockViewModel: ObservableObject {
-    @Published private(set) var items: [DockItem] = []
-    @Published private(set) var groups: [DockGroup] = []
-    @Published var isVisible: Bool = true
+@Observable
+final class CustomDockViewModel {
+    private(set) var items: [CustomDockItem] = []
+    private(set) var groups: [CustomDockGroup] = []
+    /// Current geometry, set by the controller for the screen the dock is on.
+    var layout: CustomDockLayout = .placeholder
+    /// Insertion index highlighted while something is dragged over the dock.
+    var dropIndex: Int?
 
-    private let persistenceService: any PersistenceServiceProtocol
-    let runningAppsMonitor: RunningAppsMonitor
-    let launchService: LaunchService
-    let iconResolver: AppIconResolver
+    /// Called after any change to `items`, so the window can resize.
+    @ObservationIgnored var onItemsChanged: (() -> Void)?
+
+    @ObservationIgnored private let persistenceService: any PersistenceServiceProtocol
+    @ObservationIgnored let runningAppsMonitor: RunningAppsMonitor
+    @ObservationIgnored let launchService: LaunchService
+    @ObservationIgnored let iconResolver: AppIconResolver
 
     // Designated init — used in tests for dependency injection
     init(
@@ -30,16 +37,6 @@ final class DockViewModel: ObservableObject {
         loadConfiguration()
     }
 
-    // Convenience init for production — creates default services on the main actor
-    convenience init() {
-        self.init(
-            persistenceService: PersistenceService.shared,
-            runningAppsMonitor: RunningAppsMonitor(),
-            launchService: LaunchService(),
-            iconResolver: AppIconResolver()
-        )
-    }
-
     // MARK: - Configuration
 
     func loadConfiguration() {
@@ -48,87 +45,117 @@ final class DockViewModel: ObservableObject {
             items = config.items.sorted { $0.sortOrder < $1.sortOrder }
             groups = config.groups
         } catch {
-            print("Failed to load dock configuration: \(error.localizedDescription)")
+            NSLog("ExtraDock: failed to load Custom Dock configuration: \(error.localizedDescription)")
             items = []
             groups = []
         }
+        onItemsChanged?()
     }
 
     func saveConfiguration() {
-        let config = DockConfiguration(items: items, groups: groups)
+        let config = CustomDockConfiguration(items: items, groups: groups)
         do {
             try persistenceService.save(config)
         } catch {
-            print("Failed to save dock configuration: \(error.localizedDescription)")
+            NSLog("ExtraDock: failed to save Custom Dock configuration: \(error.localizedDescription)")
         }
     }
 
     // MARK: - Item Management
 
-    func addItem(_ item: DockItem) {
-        var newItem = item
-        newItem.sortOrder = items.count
-        items.append(newItem)
-        saveConfiguration()
+    func addItem(_ item: CustomDockItem) {
+        insert([item], at: items.count)
     }
 
     func addItemFromURL(_ url: URL) {
-        let isApp = url.pathExtension.lowercased() == "app"
-        let isDirectory = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
-        let type: DockItemType = isApp ? .app : (isDirectory ? .folder : .file)
-        let displayName = url.deletingPathExtension().lastPathComponent
-        let item = DockItem(type: type, path: url.path, displayName: displayName)
-        addItem(item)
+        addItems(from: [url])
     }
 
-    func removeItem(_ item: DockItem) {
+    /// Adds apps, files, folders, or web links. Paths already in the dock are
+    /// skipped. Returns how many items were added.
+    @discardableResult
+    func addItems(from urls: [URL], at index: Int? = nil) -> Int {
+        var seenPaths = Set(items.map(\.path))
+        let newItems = urls.compactMap { url -> CustomDockItem? in
+            guard let item = Self.makeItem(from: url), seenPaths.insert(item.path).inserted else { return nil }
+            return item
+        }
+        guard !newItems.isEmpty else { return 0 }
+        insert(newItems, at: index ?? items.count)
+        return newItems.count
+    }
+
+    func removeItem(_ item: CustomDockItem) {
         items.removeAll { $0.id == item.id }
-        reindexSortOrders()
-        saveConfiguration()
+        commitItemChange()
     }
 
     func moveItem(from source: IndexSet, to destination: Int) {
         items.move(fromOffsets: source, toOffset: destination)
-        reindexSortOrders()
-        saveConfiguration()
+        commitItemChange()
     }
 
-    func renameItem(_ item: DockItem, to name: String) {
-        guard let index = items.firstIndex(where: { $0.id == item.id }) else { return }
-        items[index].displayName = name
-        saveConfiguration()
+    /// Moves the item with `id` so it lands at `insertionIndex` (0...items.count,
+    /// measured before the move, as reported by `CustomDockLayout`).
+    func moveItem(id: UUID, toInsertionIndex insertionIndex: Int) {
+        guard let from = items.firstIndex(where: { $0.id == id }) else { return }
+        let destination = min(max(insertionIndex, 0), items.count)
+        guard destination != from, destination != from + 1 else { return }
+        moveItem(from: IndexSet(integer: from), to: destination)
+    }
+
+    func renameItem(_ item: CustomDockItem, to name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let index = items.firstIndex(where: { $0.id == item.id }) else { return }
+        items[index].displayName = trimmed
+        commitItemChange()
+    }
+
+    static func makeItem(from url: URL) -> CustomDockItem? {
+        if url.isFileURL {
+            let isApp = url.pathExtension.lowercased() == "app"
+            let isDirectory = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
+            let type: CustomDockItemType = isApp ? .app : (isDirectory ? .folder : .file)
+            let displayName = url.deletingPathExtension().lastPathComponent
+            return CustomDockItem(type: type, path: url.path, displayName: displayName)
+        }
+        guard let scheme = url.scheme?.lowercased(), ["http", "https"].contains(scheme) else { return nil }
+        return CustomDockItem(type: .url, path: url.absoluteString, displayName: url.host ?? url.absoluteString)
     }
 
     // MARK: - App State
 
-    func isRunning(_ item: DockItem) -> Bool {
+    func isRunning(_ item: CustomDockItem) -> Bool {
         guard item.type == .app, let bundleID = item.bundleIdentifier else { return false }
         return runningAppsMonitor.isRunning(bundleID: bundleID)
     }
 
-    func icon(for item: DockItem) -> NSImage {
+    func icon(for item: CustomDockItem) -> NSImage {
         iconResolver.icon(for: item)
     }
 
     // MARK: - Actions
 
-    func launchItem(_ item: DockItem) {
+    func launchItem(_ item: CustomDockItem) {
         launchService.launch(item: item)
     }
 
-    func revealInFinder(_ item: DockItem) {
+    func revealInFinder(_ item: CustomDockItem) {
         launchService.revealInFinder(item: item)
-    }
-
-    func toggleVisibility() {
-        isVisible.toggle()
     }
 
     // MARK: - Private Helpers
 
-    private func reindexSortOrders() {
+    private func insert(_ newItems: [CustomDockItem], at index: Int) {
+        items.insert(contentsOf: newItems, at: min(max(index, 0), items.count))
+        commitItemChange()
+    }
+
+    private func commitItemChange() {
         for index in items.indices {
             items[index].sortOrder = index
         }
+        saveConfiguration()
+        onItemsChanged?()
     }
 }

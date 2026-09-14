@@ -1,149 +1,113 @@
 import AppKit
 import SwiftUI
 
-// MARK: - DockIconCell
+// MARK: - CustomDockItemView
 
-struct DockIconCell: View {
-    let item: DockItem
-
-    @EnvironmentObject var dockViewModel: DockViewModel
-    @EnvironmentObject var settingsViewModel: SettingsViewModel
+struct CustomDockItemView: View {
+    let item: CustomDockItem
+    let layout: CustomDockLayout
+    let viewModel: CustomDockViewModel
+    let settings: AppSettings
+    let menu: (CustomDockItem) -> NSMenu
 
     @State private var isHovered = false
-    @State private var isRenaming = false
-    @State private var renameText = ""
-
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // MARK: - Computed Properties
 
-    var isRunning: Bool {
-        dockViewModel.isRunning(item)
+    private var isRunning: Bool {
+        viewModel.isRunning(item)
     }
 
-    var iconImage: NSImage {
-        dockViewModel.icon(for: item)
+    private var scale: CGFloat {
+        guard isHovered, layout.magnification > 1 else { return 1 }
+        return layout.magnification
     }
 
-    var iconSize: CGFloat {
-        let base = settingsViewModel.iconSize
-        guard isHovered, settingsViewModel.magnificationEnabled else { return base }
-        return base * settingsViewModel.magnificationScale
+    /// Magnified icons grow away from the screen edge.
+    private var scaleAnchor: UnitPoint {
+        switch layout.edge {
+        case .bottom: return .bottom
+        case .left: return .leading
+        case .right: return .trailing
+        }
     }
 
-    var animationDuration: Double {
-        reduceMotion ? 0 : 0.15
+    private var animation: Animation? {
+        reduceMotion ? nil : .easeInOut(duration: 0.15)
     }
 
     // MARK: - Body
 
     var body: some View {
-        VStack(spacing: 4) {
-            Image(nsImage: iconImage)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: iconSize, height: iconSize)
-                .grayscale(settingsViewModel.useMonochromeIcons ? 1.0 : 0.0)
-                .shadow(
-                    color: isHovered ? .black.opacity(0.3) : .clear,
-                    radius: 4, x: 0, y: 2
+        let icon = viewModel.icon(for: item)
+        cellContent(icon: icon)
+            .frame(width: layout.cellSize.width, height: layout.cellSize.height)
+            .overlay {
+                DockItemInteraction(
+                    onHover: { hovering in
+                        withAnimation(animation) { isHovered = hovering }
+                    },
+                    onClick: { viewModel.launchItem(item) },
+                    menu: { menu(item) },
+                    dragItem: {
+                        let pasteboardItem = NSPasteboardItem()
+                        pasteboardItem.setString(item.id.uuidString, forType: CustomDockDropView.itemIDType)
+                        return pasteboardItem
+                    },
+                    dragImage: icon
                 )
-                .animation(.easeInOut(duration: animationDuration), value: iconSize)
-                .animation(.easeInOut(duration: animationDuration), value: isHovered)
-
-            if settingsViewModel.showLabels {
-                Text(item.displayName)
-                    .font(.caption2)
-                    .lineLimit(1)
-                    .foregroundStyle(.primary)
             }
-
-            if isRunning {
-                RunningIndicatorView()
-            }
-        }
-        .onHover { hovering in
-            withAnimation(.easeInOut(duration: animationDuration)) {
-                isHovered = hovering
-            }
-        }
-        .onTapGesture {
-            dockViewModel.launchItem(item)
-        }
-        .contextMenu {
-            contextMenuContent
-        }
-        .sheet(isPresented: $isRenaming) {
-            RenameSheet(text: $renameText, isPresented: $isRenaming) { newName in
-                dockViewModel.renameItem(item, to: newName)
-            }
-        }
-        .accessibilityLabel("\(item.displayName), \(item.type.rawValue)\(isRunning ? ", running" : "")")
-        .accessibilityAddTraits(.isButton)
+            .zIndex(isHovered ? 1 : 0)
+            .help(item.displayName)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(item.displayName), \(item.type.rawValue)\(isRunning ? ", running" : "")")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { viewModel.launchItem(item) }
     }
 
     @ViewBuilder
-    private var contextMenuContent: some View {
-        Button("Open") {
-            dockViewModel.launchItem(item)
-        }
-
-        if item.type != .url {
-            Button("Reveal in Finder") {
-                dockViewModel.revealInFinder(item)
+    private func cellContent(icon: NSImage) -> some View {
+        let indicator = RunningIndicatorView(size: CustomDockLayout.indicatorSize)
+            .opacity(isRunning ? 1 : 0)
+        switch layout.edge {
+        case .bottom:
+            VStack(spacing: CustomDockLayout.indicatorGap) {
+                iconBlock(icon: icon)
+                indicator
             }
-        }
-
-        Divider()
-
-        Button("Rename…") {
-            renameText = item.displayName
-            isRenaming = true
-        }
-
-        Divider()
-
-        Button("Remove", role: .destructive) {
-            dockViewModel.removeItem(item)
+        case .left:
+            HStack(spacing: CustomDockLayout.indicatorGap) {
+                indicator
+                iconBlock(icon: icon)
+            }
+        case .right:
+            HStack(spacing: CustomDockLayout.indicatorGap) {
+                iconBlock(icon: icon)
+                indicator
+            }
         }
     }
-}
 
-// MARK: - RenameSheet
+    private func iconBlock(icon: NSImage) -> some View {
+        VStack(spacing: CustomDockLayout.labelGap) {
+            Image(nsImage: icon)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: layout.iconSize, height: layout.iconSize)
+                .grayscale(settings.customMonochrome ? 1.0 : 0.0)
+                .shadow(color: isHovered ? .black.opacity(0.3) : .clear, radius: 4, x: 0, y: 2)
+                .scaleEffect(scale, anchor: scaleAnchor)
 
-struct RenameSheet: View {
-    @Binding var text: String
-    @Binding var isPresented: Bool
-    var onRename: (String) -> Void
-
-    var body: some View {
-        VStack(spacing: 16) {
-            Text("Rename Item")
-                .font(.headline)
-
-            TextField("Name", text: $text)
-                .textFieldStyle(.roundedBorder)
-                .onSubmit {
-                    guard !text.isEmpty else { return }
-                    onRename(text)
-                    isPresented = false
-                }
-
-            HStack {
-                Button("Cancel") {
-                    isPresented = false
-                }
-                .keyboardShortcut(.escape)
-
-                Button("Rename") {
-                    onRename(text)
-                    isPresented = false
-                }
-                .keyboardShortcut(.return)
-                .disabled(text.isEmpty)
+            if layout.showLabels {
+                Text(item.displayName)
+                    .font(.caption2)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .foregroundStyle(.primary)
+                    .frame(width: layout.iconBlockSize.width, height: CustomDockLayout.labelHeight)
             }
         }
-        .padding()
-        .frame(width: 280)
+        .frame(width: layout.iconBlockSize.width, height: layout.iconBlockSize.height)
     }
 }

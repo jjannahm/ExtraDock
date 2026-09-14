@@ -3,59 +3,70 @@ import AppKit
 import ApplicationServices
 import Observation
 
-@Observable
-class BadgeReader {
+/// Reads unread-count badges from the system Dock via the Accessibility API.
+/// Without Accessibility permission it waits quietly until permission is granted.
+@MainActor
+final class BadgeReader {
     private(set) var badges: [String: String] = [:]
-    private(set) var isAccessibilityGranted = false
     private var pollTimer: Timer?
     private var permissionTimer: Timer?
+    private var hasPromptedThisLaunch = false
     var onChange: (([String: String]) -> Void)?
 
-    init() {
-        // Don't check trust here — do it after app is fully launched
+    static var isAccessibilityGranted: Bool {
+        AXIsProcessTrusted()
     }
 
-    deinit {
-        pollTimer?.invalidate()
-        permissionTimer?.invalidate()
-    }
-
-    /// Call after app launch to start badge reading
-    func start() {
-        let trusted = AXIsProcessTrusted()
-        isAccessibilityGranted = trusted
-
-        if trusted {
+    /// Starts reading badges. With `requestAccess`, shows the system permission
+    /// prompt (at most once per launch) if access hasn't been granted yet.
+    func start(requestAccess: Bool) {
+        if Self.isAccessibilityGranted {
             startPolling()
-        } else {
-            requestPermission()
+            return
+        }
+        if requestAccess && !hasPromptedThisLaunch {
+            hasPromptedThisLaunch = true
+            Self.requestAccessibilityPermission()
+        }
+        waitForPermission()
+    }
+
+    func stop() {
+        pollTimer?.invalidate()
+        pollTimer = nil
+        permissionTimer?.invalidate()
+        permissionTimer = nil
+        if !badges.isEmpty {
+            badges = [:]
+            onChange?([:])
         }
     }
 
     /// Request accessibility permission (shows system prompt if not yet granted)
-    func requestPermission() {
-        let opts = [kAXTrustedCheckOptionPrompt.takeRetainedValue(): true] as CFDictionary
-        let trusted = AXIsProcessTrustedWithOptions(opts)
-        isAccessibilityGranted = trusted
+    static func requestAccessibilityPermission() {
+        // kAXTrustedCheckOptionPrompt is a global constant: borrow it, don't consume it.
+        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
+        _ = AXIsProcessTrustedWithOptions(options)
+    }
 
-        if trusted {
-            startPolling()
-        } else {
-            // Poll for permission grant (user may grant it in System Settings)
-            permissionTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] timer in
-                if AXIsProcessTrusted() {
-                    timer.invalidate()
-                    self?.isAccessibilityGranted = true
-                    self?.startPolling()
-                }
+    private func waitForPermission() {
+        guard permissionTimer == nil else { return }
+        // Poll for permission grant (user may grant it in System Settings)
+        permissionTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] timer in
+            MainActor.assumeIsolated {
+                guard Self.isAccessibilityGranted else { return }
+                timer.invalidate()
+                self?.permissionTimer = nil
+                self?.startPolling()
             }
         }
     }
 
     private func startPolling() {
+        guard pollTimer == nil else { return }
         refresh()
         pollTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
-            self?.refresh()
+            MainActor.assumeIsolated { self?.refresh() }
         }
     }
 

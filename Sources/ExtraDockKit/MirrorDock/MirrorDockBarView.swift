@@ -1,44 +1,62 @@
 import SwiftUI
 
-struct DockBarView: View {
-    var dockState: DockState
+/// Per-panel geometry, observed by the bar view.
+@MainActor
+@Observable
+final class MirrorDockPresentation {
+    var layout: MirrorDockLayout
+
+    init(layout: MirrorDockLayout) {
+        self.layout = layout
+    }
+}
+
+struct MirrorDockBarView: View {
+    let dockState: MirrorDockState
+    let presentation: MirrorDockPresentation
+    let launchService: LaunchService
 
     var body: some View {
-        HStack(spacing: 0) {
-            let grouped = groupedItems()
-            let size = dockState.scaledTileSize
+        let layout = presentation.layout
+        let grouped = groupedItems()
+        let size = layout.tileSize
+        let isVertical = layout.edge.isVertical
+        let stack = isVertical
+            ? AnyLayout(VStackLayout(spacing: 0))
+            : AnyLayout(HStackLayout(spacing: 0))
 
-            if !grouped.pinned.isEmpty {
-                ForEach(grouped.pinned) { item in
-                    DockItemView(item: item, tileSize: size)
-                }
+        stack {
+            ForEach(grouped.pinned) { item in
+                itemView(item, layout: layout)
             }
 
             if !grouped.pinned.isEmpty && (!grouped.recent.isEmpty || !grouped.others.isEmpty) {
-                DockSeparatorView(height: size)
+                DockSeparatorView(tileSize: size, isVerticalDock: isVertical)
             }
 
-            if !grouped.recent.isEmpty {
-                ForEach(grouped.recent) { item in
-                    DockItemView(item: item, tileSize: size)
-                }
+            ForEach(grouped.recent) { item in
+                itemView(item, layout: layout)
             }
 
             if !grouped.recent.isEmpty && !grouped.others.isEmpty {
-                DockSeparatorView(height: size)
+                DockSeparatorView(tileSize: size, isVerticalDock: isVertical)
             }
 
-            if !grouped.others.isEmpty {
-                ForEach(grouped.others) { item in
-                    DockItemView(item: item, tileSize: size)
-                }
+            ForEach(grouped.others) { item in
+                itemView(item, layout: layout)
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(isVertical ? .vertical : .horizontal, 8)
+        .padding(isVertical ? .horizontal : .vertical, 4)
+        .frame(width: layout.panelSize.width, height: layout.panelSize.height)
+        .background(VisualEffectBackground(cornerRadius: MirrorDockLayout.cornerRadius))
     }
 
-    private func groupedItems() -> (pinned: [DockItem], recent: [DockItem], others: [DockItem]) {
+    private func itemView(_ item: MirrorDockItem, layout: MirrorDockLayout) -> some View {
+        MirrorDockItemView(item: item, tileSize: layout.tileSize, edge: layout.edge, launchService: launchService)
+    }
+
+    private func groupedItems() -> (pinned: [MirrorDockItem], recent: [MirrorDockItem], others: [MirrorDockItem]) {
         let pinned = dockState.items.filter { $0.section == .pinnedApps }
         let recent = dockState.items.filter { $0.section == .recentApps }
         let others = dockState.items.filter { $0.section == .persistentOthers }

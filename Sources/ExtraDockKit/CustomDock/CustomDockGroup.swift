@@ -1,17 +1,17 @@
 import Foundation
 
-// MARK: - DockGroup
+// MARK: - CustomDockGroup
 
-struct DockGroup: Identifiable, Codable, Equatable, Sendable {
+struct CustomDockGroup: Identifiable, Codable, Equatable, Sendable {
     var id: UUID
     var title: String
-    var items: [DockItem]
+    var items: [CustomDockItem]
     var isExpanded: Bool
 
     init(
         id: UUID = UUID(),
         title: String,
-        items: [DockItem] = [],
+        items: [CustomDockItem] = [],
         isExpanded: Bool = false
     ) {
         self.id = id
@@ -20,18 +20,18 @@ struct DockGroup: Identifiable, Codable, Equatable, Sendable {
         self.isExpanded = isExpanded
     }
 
-    var sortedItems: [DockItem] {
+    var sortedItems: [CustomDockItem] {
         items.sorted { $0.sortOrder < $1.sortOrder }
     }
 }
 
-// MARK: - DockConfiguration
+// MARK: - CustomDockConfiguration
 
-struct DockConfiguration: Codable, Sendable {
-    var items: [DockItem]
-    var groups: [DockGroup]
+struct CustomDockConfiguration: Codable, Sendable {
+    var items: [CustomDockItem]
+    var groups: [CustomDockGroup]
 
-    init(items: [DockItem] = [], groups: [DockGroup] = []) {
+    init(items: [CustomDockItem] = [], groups: [CustomDockGroup] = []) {
         self.items = items
         self.groups = groups
     }

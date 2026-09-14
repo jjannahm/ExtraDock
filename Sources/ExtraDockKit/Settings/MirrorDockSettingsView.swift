@@ -1,96 +1,83 @@
-// SettingsView.swift
+// MirrorDockSettingsView.swift
+import AppKit
 import SwiftUI
-import ServiceManagement
 
-private struct ScreenEntry: Identifiable {
-    let id: CGDirectDisplayID
-    let screen: NSScreen
+private struct DisplayEntry: Identifiable {
+    let id: String
+    let name: String
+    let hasSystemDock: Bool
 }
 
-struct SettingsView: View {
-    var screenMonitor: ScreenMonitor
-    @State private var dockScale: Double = (UserDefaults.standard.object(forKey: "dockScale") as? Double) ?? 1.0
-    @State private var launchAtLogin: Bool = SMAppService.mainApp.status == .enabled
-    @State private var autoHideEnabled: Bool = UserDefaults.standard.bool(forKey: "autoHideEnabled")
-    @State private var autoHideSeconds: Double = (UserDefaults.standard.object(forKey: "autoHideSeconds") as? Double) ?? 5.0
+struct MirrorDockSettingsView: View {
+    @Bindable var settings: AppSettings
+    let dockState: MirrorDockState
 
-    private var screenEntries: [ScreenEntry] {
-        NSScreen.screens.compactMap { screen in
-            guard let displayID = ScreenMonitor.displayID(for: screen) else { return nil }
-            return ScreenEntry(id: displayID, screen: screen)
-        }
-    }
+    @State private var displays: [DisplayEntry] = []
 
     var body: some View {
         Form {
-            Section("Monitors") {
-                ForEach(screenEntries) { entry in
-                    Toggle(screenName(entry.screen, displayID: entry.id),
-                           isOn: Binding(
-                            get: { screenMonitor.isEnabled(entry.id) },
-                            set: { screenMonitor.setEnabled(entry.id, enabled: $0) }
-                           ))
-                }
+            Section {
+                Toggle("Mirror the system Dock", isOn: $settings.mirrorEnabled)
+            } footer: {
+                Text("Shows a copy of your Dock — pinned apps, recent apps, and folders — on the displays you choose below.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
-            Section("Appearance") {
-                Slider(value: $dockScale, in: 0.5...2.0, step: 0.1) {
-                    Text("Scale: \(Int(dockScale * 100))%")
-                }
-                .onChange(of: dockScale) { _, newValue in
-                    UserDefaults.standard.set(newValue, forKey: "dockScale")
-                    NotificationCenter.default.post(name: .extraDockScaleChanged, object: nil)
-                }
-            }
-
-            Section("Behavior") {
-                Toggle("Hide dock after inactivity", isOn: $autoHideEnabled)
-                    .onChange(of: autoHideEnabled) { _, newValue in
-                        UserDefaults.standard.set(newValue, forKey: "autoHideEnabled")
-                        NotificationCenter.default.post(name: .extraDockAutoHideChanged, object: nil)
-                    }
-
-                if autoHideEnabled {
-                    Slider(value: $autoHideSeconds, in: 1...30, step: 1) {
-                        Text("Hide after \(Int(autoHideSeconds))s")
-                    }
-                    .onChange(of: autoHideSeconds) { _, newValue in
-                        UserDefaults.standard.set(newValue, forKey: "autoHideSeconds")
-                        NotificationCenter.default.post(name: .extraDockAutoHideChanged, object: nil)
-                    }
-                }
-            }
-
-            Section("General") {
-                Toggle("Launch at login", isOn: $launchAtLogin)
-                    .onChange(of: launchAtLogin) { _, newValue in
-                        do {
-                            if newValue {
-                                try SMAppService.mainApp.register()
-                            } else {
-                                try SMAppService.mainApp.unregister()
-                            }
-                        } catch {
-                            launchAtLogin = !newValue
+            Section {
+                ForEach(displays) { display in
+                    Toggle(isOn: Binding(
+                        get: { settings.isMirrorEnabled(onDisplay: display.id, hasSystemDock: display.hasSystemDock) },
+                        set: { settings.setMirrorEnabled($0, onDisplay: display.id) }
+                    )) {
+                        Text(display.name)
+                        if display.hasSystemDock {
+                            Text("The system Dock is on this display")
                         }
                     }
+                }
+            } header: {
+                Text("Displays")
+            } footer: {
+                Text(displays.count < 2
+                    ? "Connect another display to mirror your Dock onto it."
+                    : "Displays you haven't changed show a mirror unless the system Dock is on them.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
+            .disabled(!settings.mirrorEnabled)
+
+            Section("Appearance") {
+                LabeledContent("Scale: \(Int((settings.mirrorScale * 100).rounded()))%") {
+                    Slider(value: $settings.mirrorScale, in: AppSettings.mirrorScaleRange, step: 0.1)
+                }
+            }
+            .disabled(!settings.mirrorEnabled)
+
+            Section("Behavior") {
+                Toggle("Hide dock after inactivity", isOn: $settings.mirrorAutoHide)
+
+                if settings.mirrorAutoHide {
+                    LabeledContent("Hide after \(Int(settings.mirrorAutoHideDelay))s") {
+                        Slider(value: $settings.mirrorAutoHideDelay, in: AppSettings.autoHideDelayRange, step: 1)
+                    }
+                }
+            }
+            .disabled(!settings.mirrorEnabled)
         }
         .formStyle(.grouped)
-        .frame(width: 400, height: 420)
-        .padding()
-    }
-
-    private func screenName(_ screen: NSScreen, displayID: CGDirectDisplayID) -> String {
-        let name = screen.localizedName
-        if screen == NSScreen.main {
-            return "\(name) (Main — native Dock)"
+        .onAppear(perform: reloadDisplays)
+        .onChange(of: dockState.edge) { reloadDisplays() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in
+            reloadDisplays()
         }
-        return name
     }
-}
 
-extension Notification.Name {
-    static let extraDockAutoHideChanged = Notification.Name("extraDockAutoHideChanged")
-    static let extraDockScaleChanged = Notification.Name("extraDockScaleChanged")
+    private func reloadDisplays() {
+        let dockDisplay = SystemDockLocator.displayKey(orientation: dockState.edge)
+        displays = NSScreen.screens.compactMap { screen in
+            guard let key = DisplayIdentity.key(for: screen) else { return nil }
+            return DisplayEntry(id: key, name: screen.localizedName, hasSystemDock: key == dockDisplay)
+        }
+    }
 }

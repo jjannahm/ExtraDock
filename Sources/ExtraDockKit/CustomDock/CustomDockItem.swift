@@ -1,26 +1,26 @@
 import Foundation
 
-// MARK: - DockItemType
+// MARK: - CustomDockItemType
 
-enum DockItemType: String, Codable, CaseIterable, Sendable {
+enum CustomDockItemType: String, Codable, CaseIterable, Sendable {
     case app
     case file
     case url
     case folder
 }
 
-// MARK: - DockItem
+// MARK: - CustomDockItem
 
-struct DockItem: Identifiable, Codable, Equatable, Hashable, Sendable {
+struct CustomDockItem: Identifiable, Codable, Equatable, Hashable, Sendable {
     var id: UUID
-    var type: DockItemType
+    var type: CustomDockItemType
     var path: String
     var displayName: String
     var sortOrder: Int
 
     init(
         id: UUID = UUID(),
-        type: DockItemType,
+        type: CustomDockItemType,
         path: String,
         displayName: String,
         sortOrder: Int = 0

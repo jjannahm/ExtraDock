@@ -1,134 +1,162 @@
 import AppKit
-import Combine
-import SwiftUI
+import UniformTypeIdentifiers
 
-// MARK: - MainWindowController
+// MARK: - CustomDockController
 
-final class MainWindowController: NSWindowController {
-    private let dockViewModel: DockViewModel
-    private let settingsViewModel: SettingsViewModel
-    private var cancellables = Set<AnyCancellable>()
+/// Owns the Custom Dock window: shows or hides it per settings, keeps it sized
+/// and attached to the chosen edge, and handles drops and item menus.
+@MainActor
+final class CustomDockController {
+    let viewModel: CustomDockViewModel
+    private let settings: AppSettings
+    private var panel: DockPanel?
 
-    init(dockViewModel: DockViewModel, settingsViewModel: SettingsViewModel) {
-        self.dockViewModel = dockViewModel
-        self.settingsViewModel = settingsViewModel
+    /// Extra distance to keep from `edge` of a screen, so the Custom Dock sits
+    /// beside (not under) a Mirror Dock on the same edge.
+    var edgeInsetProvider: ((NSScreen, DockEdge) -> CGFloat)?
 
-        let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 80),
-            styleMask: [.borderless, .nonactivatingPanel],
-            backing: .buffered,
-            defer: false
-        )
-
-        panel.level = .floating
-        panel.collectionBehavior = [
-            .canJoinAllSpaces,
-            .fullScreenAuxiliary,
-            .stationary
-        ]
-        panel.isMovableByWindowBackground = false
-        panel.backgroundColor = .clear
-        panel.isOpaque = false
-        panel.hasShadow = true
-        panel.isReleasedWhenClosed = false
-
-        let contentView = DockContainerView()
-            .environmentObject(dockViewModel)
-            .environmentObject(settingsViewModel)
-
-        panel.contentView = NSHostingView(rootView: contentView)
-
-        super.init(window: panel)
-
-        setupSettingsObservers()
+    init(settings: AppSettings, viewModel: CustomDockViewModel) {
+        self.settings = settings
+        self.viewModel = viewModel
+        viewModel.onItemsChanged = { [weak self] in
+            self?.layoutPanel()
+        }
     }
 
-    // MARK: - Settings Observers
+    // MARK: Lifecycle
 
-    private func setupSettingsObservers() {
-        // Observe any changes from the settings view model and update position accordingly
-        settingsViewModel.objectWillChange
-            .receive(on: RunLoop.main)
-            .sink { [weak self] _ in
-                self?.updatePositionForSettings()
-            }
-            .store(in: &cancellables)
+    /// Applies current settings: creates or removes the panel, then lays it out.
+    func refresh() {
+        guard settings.customEnabled else {
+            panel?.close()
+            panel = nil
+            return
+        }
+        if panel == nil {
+            panel = makePanel()
+        }
+        layoutPanel()
     }
 
-    private func updatePositionForSettings() {
-        positionWindow(
-            for: settingsViewModel.dockEdge,
-            offset: settingsViewModel.edgeOffset
-        )
+    private func makePanel() -> DockPanel {
+        let panel = DockPanel(autoHideMode: .afterPointerLeaves, showsOverFullScreenApps: true)
+        let dropView = CustomDockDropView(frame: .zero)
+        dropView.layoutProvider = { [weak self] in
+            self?.viewModel.layout ?? .placeholder
+        }
+        dropView.onHover = { [weak self] index in
+            guard let self, self.viewModel.dropIndex != index else { return }
+            self.viewModel.dropIndex = index
+        }
+        dropView.onDrop = { [weak self] drop in
+            self?.perform(drop) ?? false
+        }
+        let rootView = CustomDockView(viewModel: viewModel, settings: settings) { [weak self] item in
+            self?.menu(for: item) ?? NSMenu()
+        }
+        panel.setRootView(rootView, container: dropView)
+        return panel
     }
 
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    // MARK: Layout
+
+    private var targetScreen: NSScreen? {
+        DisplayIdentity.screen(forKey: settings.customDisplay) ?? DisplayIdentity.primaryScreen
     }
 
-    override func showWindow(_ sender: Any?) {
-        guard let window else { return }
-        window.orderFrontRegardless()
-    }
-
-    // MARK: - Positioning
-
-    func positionWindow(for edge: DockEdge, offset: Double) {
-        guard let window, let screen = NSScreen.main else { return }
-        let screenFrame = screen.visibleFrame
-        let windowSize = window.frame.size
-        let origin = windowOrigin(
+    func layoutPanel() {
+        guard let panel, let screen = targetScreen else { return }
+        let edge = settings.customEdge
+        let visibleFrame = screen.visibleFrame
+        let layout = CustomDockLayout(
             edge: edge,
-            offset: offset,
-            screenFrame: screenFrame,
-            windowSize: windowSize
+            itemCount: viewModel.items.count,
+            iconSize: settings.customIconSize,
+            spacing: settings.customIconSpacing,
+            showLabels: settings.customShowLabels,
+            magnification: settings.customMagnification ? settings.customMagnificationScale : 1,
+            availableLength: DockGeometry.availableLength(along: edge, in: visibleFrame)
         )
-        window.setFrameOrigin(origin)
+        viewModel.layout = layout
+
+        let origin = DockGeometry.origin(
+            edge: edge,
+            size: layout.panelSize,
+            in: visibleFrame,
+            offset: settings.customOffset,
+            inset: edgeInsetProvider?(screen, edge) ?? 0
+        )
+        panel.place(frame: NSRect(origin: origin, size: layout.panelSize), edge: edge, screenFrame: screen.frame)
+        panel.setAutoHide(enabled: settings.customAutoHide, delay: settings.customAutoHideDelay)
     }
 
-    func windowOrigin(
-        edge: DockEdge,
-        offset: Double,
-        screenFrame: CGRect,
-        windowSize: CGSize
-    ) -> CGPoint {
-        switch edge {
-        case .bottom:
-            return CGPoint(
-                x: screenFrame.midX - windowSize.width / 2 + offset,
-                y: screenFrame.minY
-            )
-        case .left:
-            return CGPoint(
-                x: screenFrame.minX,
-                y: screenFrame.midY - windowSize.height / 2 + offset
-            )
-        case .right:
-            return CGPoint(
-                x: screenFrame.maxX - windowSize.width,
-                y: screenFrame.midY - windowSize.height / 2 + offset
-            )
+    // MARK: Adding items
+
+    func addItemsWithOpenPanel() {
+        let openPanel = NSOpenPanel()
+        openPanel.title = "Add to Custom Dock"
+        openPanel.prompt = "Add"
+        openPanel.message = "Choose apps, files, or folders to add to the Custom Dock."
+        openPanel.canChooseFiles = true
+        openPanel.canChooseDirectories = true
+        openPanel.allowsMultipleSelection = true
+        openPanel.directoryURL = URL(fileURLWithPath: "/Applications")
+        NSApp.activate()
+        guard openPanel.runModal() == .OK else { return }
+        viewModel.addItems(from: openPanel.urls)
+        if !settings.customEnabled {
+            settings.customEnabled = true
         }
     }
 
-    // MARK: - Animations
-
-    func slideIn() {
-        guard let window else { return }
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.2
-            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-            window.animator().alphaValue = 1.0
+    private func perform(_ drop: CustomDockDropView.Drop) -> Bool {
+        switch drop {
+        case let .move(itemID, insertionIndex):
+            viewModel.moveItem(id: itemID, toInsertionIndex: insertionIndex)
+            return true
+        case let .add(urls, insertionIndex):
+            return viewModel.addItems(from: urls, at: insertionIndex) > 0
         }
     }
 
-    func slideOut() {
-        guard let window else { return }
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.2
-            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-            window.animator().alphaValue = 0.0
+    // MARK: Item menu
+
+    private func menu(for item: CustomDockItem) -> NSMenu {
+        let menu = NSMenu()
+        menu.addItem(ClosureMenuItem("Open") { [weak self] in
+            self?.viewModel.launchItem(item)
+        })
+        if item.type != .url {
+            menu.addItem(ClosureMenuItem("Show in Finder") { [weak self] in
+                self?.viewModel.revealInFinder(item)
+            })
         }
+        menu.addItem(.separator())
+        menu.addItem(ClosureMenuItem("Rename…") { [weak self] in
+            // Let the menu finish closing before running a modal alert.
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { self?.promptRename(item) }
+            }
+        })
+        menu.addItem(ClosureMenuItem("Remove from Dock") { [weak self] in
+            self?.viewModel.removeItem(item)
+        })
+        return menu
+    }
+
+    /// The dock panel can't take keyboard focus, so rename in a regular alert.
+    private func promptRename(_ item: CustomDockItem) {
+        let alert = NSAlert()
+        alert.messageText = "Rename “\(item.displayName)”"
+        alert.informativeText = "This only changes the name shown in the Custom Dock."
+        alert.addButton(withTitle: "Rename")
+        alert.addButton(withTitle: "Cancel")
+        let field = NSTextField(string: item.displayName)
+        field.frame = NSRect(x: 0, y: 0, width: 260, height: 24)
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        NSApp.activate()
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        viewModel.renameItem(item, to: field.stringValue)
     }
 }

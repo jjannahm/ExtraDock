@@ -1,21 +1,23 @@
-# Xcode
+# Swift Package Manager
+.build/
+.swiftpm/
+Packages/
+*.resolved
+
+# App bundle built by install.sh
 build/
+
+# Xcode (opening Package.swift)
 DerivedData/
-*.xcuserdata
-*.xcworkspace
-!*.xcodeproj/project.pbxproj
-*.xcodeproj/xcuserdata/
-*.xcodeproj/project.xcworkspace/xcuserdata/
+xcuserdata/
+*.xcarchive
 
 # macOS
 .DS_Store
 
-# Swift Package Manager
-.build/
-Packages/
-
-# Plans
-docs/plans/
+# Environment
+.env
+.env*.local
 
 # Debug
 debug.log

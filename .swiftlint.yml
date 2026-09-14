@@ -1,10 +1,10 @@
 included:
-  - Extradock
-  - ExtradockTests
+  - Sources
+  - Tests
 
 excluded:
-  - Extradock.xcodeproj
   - .build
+  - build
 
 opt_in_rules:
   - array_init

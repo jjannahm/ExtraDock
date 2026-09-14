@@ -3,122 +3,143 @@ import SwiftUI
 
 // MARK: - AppDelegate
 
+/// Menu bar app that runs both docks: the Mirror Dock (a copy of the system Dock
+/// on other displays) and the Custom Dock (a dock you fill yourself).
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
-    var dockWindowController: MainWindowController?
-    private var settingsWindowController: SettingsWindowController?
-    private var statusBarItem: NSStatusItem?
+public final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
+    private let settings = AppSettings()
+    private let runningApps = RunningAppsMonitor()
+    private let launchService = LaunchService()
+    private var mirrorDock: MirrorDockController?
+    private var customDock: CustomDockController?
+    private var statusItem: NSStatusItem?
+    private var settingsWindow: NSWindow?
 
-    let dockViewModel: DockViewModel
-    let settingsViewModel: SettingsViewModel
-
-    override init() {
-        self.dockViewModel = DockViewModel()
-        self.settingsViewModel = SettingsViewModel()
+    override public init() {
         super.init()
     }
 
-    func applicationDidFinishLaunching(_ notification: Notification) {
+    public func applicationDidFinishLaunching(_ notification: Notification) {
         // Run as accessory — no Dock icon for the app itself
         NSApp.setActivationPolicy(.accessory)
 
-        setupDockWindow()
-        setupStatusBar()
-        setupScreenChangeObserver()
-    }
-
-    func applicationWillTerminate(_ notification: Notification) {
-        dockViewModel.saveConfiguration()
-    }
-
-    // MARK: - Setup
-
-    private func setupDockWindow() {
-        dockWindowController = MainWindowController(
-            dockViewModel: dockViewModel,
-            settingsViewModel: settingsViewModel
-        )
-        dockWindowController?.showWindow(nil)
-        dockWindowController?.positionWindow(
-            for: settingsViewModel.dockEdge,
-            offset: settingsViewModel.edgeOffset
-        )
-    }
-
-    private func setupStatusBar() {
-        statusBarItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusBarItem?.button?.image = NSImage(
-            systemSymbolName: "dock.rectangle",
-            accessibilityDescription: "Extradock"
-        )
-        statusBarItem?.menu = buildStatusMenu()
-    }
-
-    private func buildStatusMenu() -> NSMenu {
-        let menu = NSMenu()
-        let toggleDockItem = NSMenuItem(
-            title: "Show/Hide Dock",
-            action: #selector(toggleDock),
-            keyEquivalent: "d"
-        )
-        toggleDockItem.target = self
-        menu.addItem(toggleDockItem)
-        menu.addItem(.separator())
-        let settingsItem = NSMenuItem(
-            title: "Settings…",
-            action: #selector(openSettings),
-            keyEquivalent: ","
-        )
-        settingsItem.target = self
-        menu.addItem(settingsItem)
-        menu.addItem(.separator())
-        menu.addItem(
-            NSMenuItem(
-                title: "Quit Extradock",
-                action: #selector(NSApplication.terminate(_:)),
-                keyEquivalent: "q"
+        let mirrorDock = MirrorDockController(settings: settings, runningApps: runningApps, launchService: launchService)
+        let customDock = CustomDockController(
+            settings: settings,
+            viewModel: CustomDockViewModel(
+                persistenceService: PersistenceService.shared,
+                runningAppsMonitor: runningApps,
+                launchService: launchService,
+                iconResolver: AppIconResolver()
             )
         )
-        return menu
-    }
+        // Keep the Custom Dock clear of a Mirror Dock on the same display edge.
+        customDock.edgeInsetProvider = { [weak mirrorDock] screen, edge in
+            mirrorDock?.occupiedDepth(on: screen, edge: edge) ?? 0
+        }
+        mirrorDock.onLayoutChange = { [weak customDock] in
+            customDock?.layoutPanel()
+        }
+        self.mirrorDock = mirrorDock
+        self.customDock = customDock
 
-    private func setupScreenChangeObserver() {
+        setupStatusItem()
         NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleScreenChange),
-            name: NSApplication.didChangeScreenParametersNotification,
-            object: nil
+            self, selector: #selector(refreshDocks), name: .extraDockSettingsChanged, object: settings
         )
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(refreshDocks),
+            name: NSApplication.didChangeScreenParametersNotification, object: nil
+        )
+        refreshDocks()
     }
 
-    // MARK: - Actions
+    /// Opening the app again (e.g. from Finder or Spotlight) shows Settings, which
+    /// helps when the menu bar icon is hidden behind the notch.
+    public func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        openSettings()
+        return false
+    }
 
-    @objc private func toggleDock() {
-        dockViewModel.toggleVisibility()
-        if dockViewModel.isVisible {
-            dockWindowController?.slideIn()
-            dockWindowController?.showWindow(nil)
-        } else {
-            dockWindowController?.slideOut()
+    @objc private func refreshDocks() {
+        mirrorDock?.refresh()
+        customDock?.refresh()
+    }
+
+    // MARK: - Status Bar
+
+    private func setupStatusItem() {
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        let image = NSImage(systemSymbolName: "dock.rectangle", accessibilityDescription: "ExtraDock")
+        image?.isTemplate = true
+        item.button?.image = image
+        let menu = NSMenu()
+        menu.delegate = self
+        item.menu = menu
+        statusItem = item
+    }
+
+    public func menuNeedsUpdate(_ menu: NSMenu) {
+        menu.removeAllItems()
+
+        let mirrorItem = ClosureMenuItem("Mirror Dock") { [weak self] in
+            self?.settings.mirrorEnabled.toggle()
         }
+        mirrorItem.state = settings.mirrorEnabled ? .on : .off
+        menu.addItem(mirrorItem)
+        if settings.mirrorEnabled, mirrorDock?.isMirroringAnyDisplay == false {
+            let hint = NSMenuItem(title: "Not shown on any display — see Settings", action: nil, keyEquivalent: "")
+            hint.isEnabled = false
+            hint.indentationLevel = 1
+            menu.addItem(hint)
+        }
+
+        let customItem = ClosureMenuItem("Custom Dock") { [weak self] in
+            self?.settings.customEnabled.toggle()
+        }
+        customItem.state = settings.customEnabled ? .on : .off
+        menu.addItem(customItem)
+
+        menu.addItem(.separator())
+        menu.addItem(ClosureMenuItem("Add to Custom Dock…") { [weak self] in
+            self?.customDock?.addItemsWithOpenPanel()
+        })
+        let refreshItem = ClosureMenuItem("Refresh Mirror Dock") { [weak self] in
+            self?.mirrorDock?.reloadDock()
+        }
+        refreshItem.isEnabled = settings.mirrorEnabled
+        menu.addItem(refreshItem)
+        if settings.mirrorEnabled && !BadgeReader.isAccessibilityGranted {
+            menu.addItem(ClosureMenuItem("Allow Accessibility Access…") {
+                BadgeReader.requestAccessibilityPermission()
+            })
+        }
+
+        menu.addItem(.separator())
+        menu.addItem(ClosureMenuItem("Settings…", keyEquivalent: ",") { [weak self] in
+            self?.openSettings()
+        })
+        menu.addItem(NSMenuItem(title: "Quit ExtraDock", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
     }
 
-    @objc private func openSettings() {
-        NSApp.activate(ignoringOtherApps: true)
+    // MARK: - Settings Window
 
-        if settingsWindowController == nil {
-            settingsWindowController = SettingsWindowController(
-                settingsViewModel: settingsViewModel
+    func openSettings() {
+        if settingsWindow == nil, let customDock {
+            let view = SettingsView(
+                settings: settings,
+                mirrorDockState: mirrorDock?.dockState ?? MirrorDockState(),
+                customDockViewModel: customDock.viewModel,
+                addCustomDockItems: { [weak customDock] in customDock?.addItemsWithOpenPanel() }
             )
+            let window = NSWindow(contentViewController: NSHostingController(rootView: view))
+            window.title = "ExtraDock Settings"
+            window.styleMask = [.titled, .closable]
+            window.isReleasedWhenClosed = false
+            window.center()
+            settingsWindow = window
         }
-
-        settingsWindowController?.showWindow(nil)
-    }
-
-    @objc private func handleScreenChange() {
-        dockWindowController?.positionWindow(
-            for: settingsViewModel.dockEdge,
-            offset: settingsViewModel.edgeOffset
-        )
+        NSApp.activate()
+        settingsWindow?.makeKeyAndOrderFront(nil)
     }
 }

@@ -3,33 +3,32 @@ import SwiftUI
 // MARK: - SettingsView
 
 struct SettingsView: View {
-    @EnvironmentObject var settingsViewModel: SettingsViewModel
+    let settings: AppSettings
+    let mirrorDockState: MirrorDockState
+    let customDockViewModel: CustomDockViewModel
+    let addCustomDockItems: () -> Void
 
     var body: some View {
         TabView {
-            GeneralSettingsView()
-                .environmentObject(settingsViewModel)
+            GeneralSettingsView(settings: settings)
                 .tabItem {
                     Label("General", systemImage: "gear")
                 }
 
-            AppearanceSettingsView()
-                .environmentObject(settingsViewModel)
+            MirrorDockSettingsView(settings: settings, dockState: mirrorDockState)
                 .tabItem {
-                    Label("Appearance", systemImage: "paintbrush")
+                    Label("Mirror Dock", systemImage: "rectangle.on.rectangle")
                 }
 
-            PositionSettingsView()
-                .environmentObject(settingsViewModel)
-                .tabItem {
-                    Label("Position", systemImage: "rectangle.3.group")
-                }
+            CustomDockSettingsView(
+                settings: settings,
+                viewModel: customDockViewModel,
+                addItems: addCustomDockItems
+            )
+            .tabItem {
+                Label("Custom Dock", systemImage: "dock.rectangle")
+            }
         }
-        .frame(width: 420, height: 360)
+        .frame(width: 480, height: 560)
     }
-}
-
-#Preview {
-    SettingsView()
-        .environmentObject(SettingsViewModel())
 }

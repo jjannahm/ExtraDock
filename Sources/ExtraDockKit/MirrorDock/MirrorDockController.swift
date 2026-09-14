@@ -1,93 +1,126 @@
-// ScreenMonitor.swift
+// MirrorDockController.swift
 import AppKit
-import Observation
 
-@Observable
-class ScreenMonitor {
-    var panels: [CGDirectDisplayID: MirrorDockPanel] = [:]
-    var dockState: DockState
+/// Mirrors the system Dock onto the displays chosen in Settings: keeps one
+/// `MirrorDockPanel` per display and keeps Dock contents, running state and
+/// badges up to date while mirroring is on.
+@MainActor
+final class MirrorDockController {
+    let dockState = MirrorDockState()
+    private let settings: AppSettings
+    private let runningApps: RunningAppsMonitor
+    private let launchService: LaunchService
+    private let plistWatcher = DockPlistWatcher()
+    private let badgeReader = BadgeReader()
+    private var panels: [String: MirrorDockPanel] = [:]
+    private var servicesRunning = false
+    /// Display the system Dock was on at the last refresh.
+    private(set) var systemDockDisplayKey: String?
+    private var dockLocationTimer: Timer?
 
-    private func readEnabledScreen(_ key: String) -> Bool? {
-        guard let dict = UserDefaults.standard.dictionary(forKey: "enabledScreens"),
-              let value = dict[key] else { return nil }
-        return (value as? NSNumber)?.boolValue
-    }
+    /// Called after panels are added, removed, or resized.
+    var onLayoutChange: (() -> Void)?
 
-    private func writeEnabledScreens(_ screens: [String: Bool]) {
-        UserDefaults.standard.set(screens, forKey: "enabledScreens")
-    }
+    init(settings: AppSettings, runningApps: RunningAppsMonitor, launchService: LaunchService) {
+        self.settings = settings
+        self.runningApps = runningApps
+        self.launchService = launchService
 
-    private var allEnabledScreens: [String: Bool] {
-        guard let dict = UserDefaults.standard.dictionary(forKey: "enabledScreens") else { return [:] }
-        var result: [String: Bool] = [:]
-        for (key, value) in dict {
-            if let num = value as? NSNumber {
-                result[key] = num.boolValue
-            }
+        plistWatcher.onChange = { [weak self] in
+            self?.reloadDock()
         }
-        return result
-    }
-
-    init(dockState: DockState) {
-        self.dockState = dockState
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(screensChanged),
-            name: NSApplication.didChangeScreenParametersNotification,
-            object: nil
-        )
-        refreshPanels()
-    }
-
-    @objc private func screensChanged() {
-        refreshPanels()
-    }
-
-    func refreshPanels() {
-        let currentScreens = NSScreen.screens
-        let currentIDs = Set(currentScreens.compactMap { ScreenMonitor.displayID(for: $0) })
-
-        // Remove panels for disconnected screens
-        for id in panels.keys where !currentIDs.contains(id) {
-            panels[id]?.close()
-            panels.removeValue(forKey: id)
+        runningApps.onChange = { [weak self] bundleIDs in
+            self?.dockState.updateRunningApps(bundleIDs)
         }
-
-        // Create or update panels for current screens
-        for screen in currentScreens {
-            guard let displayID = ScreenMonitor.displayID(for: screen) else { continue }
-
-            if isEnabled(displayID) {
-                if let panel = panels[displayID] {
-                    panel.updatePosition()
-                } else {
-                    let panel = MirrorDockPanel(screen: screen, dockState: dockState)
-                    panels[displayID] = panel
-                }
-            } else {
-                if let panel = panels[displayID] {
-                    panel.close()
-                    panels.removeValue(forKey: displayID)
-                }
-            }
+        badgeReader.onChange = { [weak self] badges in
+            self?.dockState.updateBadges(badges)
         }
     }
 
-    func isEnabled(_ displayID: CGDirectDisplayID) -> Bool {
-        if let stored = readEnabledScreen(String(displayID)) {
-            return stored
+    var isMirroringAnyDisplay: Bool {
+        !panels.isEmpty
+    }
+
+    // MARK: Refresh
+
+    /// Applies settings and the current display arrangement.
+    func refresh() {
+        if settings.mirrorEnabled {
+            startServices()
+        } else {
+            stopServices()
         }
-        return true
+        systemDockDisplayKey = SystemDockLocator.displayKey(orientation: dockState.edge)
+        let screens = settings.mirrorEnabled ? NSScreen.screens.filter(shouldMirror(on:)) : []
+
+        var wantedKeys = Set<String>()
+        for screen in screens {
+            guard let key = DisplayIdentity.key(for: screen) else { continue }
+            wantedKeys.insert(key)
+            let panel = panels[key] ?? MirrorDockPanel(dockState: dockState, launchService: launchService)
+            panels[key] = panel
+            panel.layout(on: screen, scale: settings.mirrorScale)
+            panel.setAutoHide(enabled: settings.mirrorAutoHide, delay: settings.mirrorAutoHideDelay)
+        }
+        for (key, panel) in panels where !wantedKeys.contains(key) {
+            panel.close()
+            panels.removeValue(forKey: key)
+        }
+
+        if !panels.isEmpty {
+            // Badges and native menus need Accessibility; ask once a mirror is actually on screen.
+            badgeReader.start(requestAccess: true)
+        }
+        onLayoutChange?()
     }
 
-    func setEnabled(_ displayID: CGDirectDisplayID, enabled: Bool) {
-        var current = allEnabledScreens
-        current[String(displayID)] = enabled
-        writeEnabledScreens(current)
-        refreshPanels()
+    /// Re-reads the Dock preferences (e.g. from the menu bar's "Refresh Mirror Dock").
+    func reloadDock() {
+        dockState.apply(DockConfigReader.parse())
+        dockState.updateRunningApps(runningApps.runningBundleIDs)
+        dockState.updateBadges(badgeReader.badges)
+        refresh()
     }
 
-    static func displayID(for screen: NSScreen) -> CGDirectDisplayID? {
-        screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID
+    func shouldMirror(on screen: NSScreen) -> Bool {
+        guard let key = DisplayIdentity.key(for: screen) else { return false }
+        return settings.isMirrorEnabled(onDisplay: key, hasSystemDock: key == systemDockDisplayKey)
+    }
+
+    /// Depth a Mirror Dock occupies on `edge` of `screen` (plus a small gap), or 0.
+    func occupiedDepth(on screen: NSScreen, edge: DockEdge) -> CGFloat {
+        guard let key = DisplayIdentity.key(for: screen), let panel = panels[key], panel.edge == edge else {
+            return 0
+        }
+        return (edge.isVertical ? panel.frame.width : panel.frame.height) + 4
+    }
+
+    // MARK: Services
+
+    private func startServices() {
+        guard !servicesRunning else { return }
+        servicesRunning = true
+        dockState.apply(DockConfigReader.parse())
+        dockState.updateRunningApps(runningApps.runningBundleIDs)
+        plistWatcher.start()
+        // A bottom Dock follows the pointer between displays; move the mirrors with it.
+        dockLocationTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.checkSystemDockLocation() }
+        }
+    }
+
+    private func stopServices() {
+        guard servicesRunning else { return }
+        servicesRunning = false
+        plistWatcher.stop()
+        badgeReader.stop()
+        dockLocationTimer?.invalidate()
+        dockLocationTimer = nil
+    }
+
+    private func checkSystemDockLocation() {
+        guard NSScreen.screens.count > 1,
+              SystemDockLocator.displayKey(orientation: dockState.edge) != systemDockDisplayKey else { return }
+        refresh()
     }
 }

@@ -1,25 +1,77 @@
+import AppKit
 import SwiftUI
 
 // MARK: - GeneralSettingsView
 
 struct GeneralSettingsView: View {
-    @EnvironmentObject var settingsViewModel: SettingsViewModel
+    @Bindable var settings: AppSettings
+
+    @State private var launchAtLogin = LaunchAtLogin.isEnabled
+    @State private var launchAtLoginError: String?
 
     var body: some View {
         Form {
+            Section("Docks") {
+                Toggle("Mirror the system Dock on other displays", isOn: $settings.mirrorEnabled)
+                Toggle("Show the Custom Dock", isOn: $settings.customEnabled)
+            }
+
+            Section("Startup") {
+                Toggle("Launch ExtraDock at login", isOn: Binding(
+                    get: { launchAtLogin },
+                    set: setLaunchAtLogin
+                ))
+                if let launchAtLoginError {
+                    Text(launchAtLoginError)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                } else if LaunchAtLogin.needsApproval {
+                    Text("Approve ExtraDock in System Settings › General › Login Items.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section {
-                Toggle("Launch at Login", isOn: $settingsViewModel.launchAtLogin)
-                Toggle("Auto-hide when inactive", isOn: $settingsViewModel.autoHide)
-                Toggle("Show on active space only", isOn: $settingsViewModel.showOnActiveSpaceOnly)
+                // Re-check periodically: permission is granted in System Settings, outside the app.
+                TimelineView(.periodic(from: .now, by: 2)) { _ in
+                    accessibilityRow(granted: BadgeReader.isAccessibilityGranted)
+                }
+            } header: {
+                Text("Accessibility")
+            } footer: {
+                Text("Optional. Lets the Mirror Dock show unread badges and the Dock's own right-click menus.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
-        .padding()
-        .frame(width: 400)
     }
-}
 
-#Preview {
-    GeneralSettingsView()
-        .environmentObject(SettingsViewModel())
+    @ViewBuilder
+    private func accessibilityRow(granted: Bool) -> some View {
+        if granted {
+            Label("Accessibility access is on", systemImage: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+        } else {
+            HStack {
+                Label("Accessibility access is off", systemImage: "exclamationmark.circle")
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("Allow Access…") {
+                    BadgeReader.requestAccessibilityPermission()
+                }
+            }
+        }
+    }
+
+    private func setLaunchAtLogin(_ enabled: Bool) {
+        do {
+            try LaunchAtLogin.setEnabled(enabled)
+            launchAtLoginError = nil
+        } catch {
+            launchAtLoginError = "Couldn't change the login item: \(error.localizedDescription)"
+        }
+        launchAtLogin = LaunchAtLogin.isEnabled
+    }
 }

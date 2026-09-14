@@ -1,27 +1,36 @@
-// PlistFileWatcher.swift
+// DockPlistWatcher.swift
 import Foundation
-import Observation
 
-@Observable
-class PlistFileWatcher {
+/// Calls `onChange` when the system Dock's preferences file changes.
+@MainActor
+final class DockPlistWatcher {
     var onChange: (() -> Void)?
+    private let url: URL
     private var fileSource: DispatchSourceFileSystemObject?
     private var pollTimer: Timer?
     private var lastModDate: Date?
 
-    init() {
+    init(url: URL = DockConfigReader.plistURL) {
+        self.url = url
+    }
+
+    func start() {
+        guard pollTimer == nil else { return }
+        lastModDate = modificationDate()
         startFileWatcher()
         startPollFallback()
     }
 
-    deinit {
+    func stop() {
         fileSource?.cancel()
+        fileSource = nil
         pollTimer?.invalidate()
+        pollTimer = nil
     }
 
     private func startFileWatcher() {
-        let path = NSHomeDirectory() + "/Library/Preferences/com.apple.dock.plist"
-        let fd = open(path, O_EVTONLY)
+        fileSource?.cancel()
+        let fd = open(url.path, O_EVTONLY)
         guard fd >= 0 else { return }
 
         let source = DispatchSource.makeFileSystemObjectSource(
@@ -30,7 +39,16 @@ class PlistFileWatcher {
             queue: .main
         )
         source.setEventHandler { [weak self] in
-            self?.onChange?()
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                let event = source.data
+                self.fileChanged()
+                // cfprefsd saves by replacing the file, which leaves this descriptor
+                // pointing at the old one; watch the new file instead.
+                if event.contains(.rename) || event.contains(.delete) {
+                    self.startFileWatcher()
+                }
+            }
         }
         source.setCancelHandler {
             close(fd)
@@ -42,18 +60,26 @@ class PlistFileWatcher {
     private func startPollFallback() {
         // Poll every 2 seconds as fallback (cfprefsd may not flush to disk immediately)
         pollTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
-            self?.checkForChanges()
+            MainActor.assumeIsolated { self?.checkForChanges() }
         }
     }
 
     private func checkForChanges() {
-        let path = NSHomeDirectory() + "/Library/Preferences/com.apple.dock.plist"
-        guard let attrs = try? FileManager.default.attributesOfItem(atPath: path),
-              let modDate = attrs[.modificationDate] as? Date else { return }
-
+        guard let modDate = modificationDate() else { return }
         if let last = lastModDate, modDate > last {
+            lastModDate = modDate
             onChange?()
+        } else if lastModDate == nil {
+            lastModDate = modDate
         }
-        lastModDate = modDate
+    }
+
+    private func fileChanged() {
+        lastModDate = modificationDate()
+        onChange?()
+    }
+
+    private func modificationDate() -> Date? {
+        (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
     }
 }

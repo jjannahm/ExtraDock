@@ -1,18 +1,18 @@
-// DockItem.swift
+// MirrorDockItem.swift
 import Foundation
 import AppKit
 
-// MARK: - DockSection
+// MARK: - MirrorDockSection
 
-enum DockSection {
+enum MirrorDockSection {
     case pinnedApps
     case recentApps
     case persistentOthers
 }
 
-// MARK: - DockItem
+// MARK: - MirrorDockItem
 
-struct DockItem: Identifiable, Equatable {
+struct MirrorDockItem: Identifiable, Equatable {
     let id: String
     var name: String
     var bundleIdentifier: String?
@@ -20,7 +20,7 @@ struct DockItem: Identifiable, Equatable {
     var icon: NSImage
     var isRunning: Bool
     var badgeCount: String?
-    var section: DockSection
+    var section: MirrorDockSection
 
     init(
         id: String = UUID().uuidString,
@@ -30,7 +30,7 @@ struct DockItem: Identifiable, Equatable {
         icon: NSImage,
         isRunning: Bool = false,
         badgeCount: String? = nil,
-        section: DockSection
+        section: MirrorDockSection
     ) {
         self.id = id
         self.name = name
@@ -43,7 +43,7 @@ struct DockItem: Identifiable, Equatable {
     }
 
     // Equatable: compare all properties except icon (NSImage isn't easily equatable)
-    static func == (lhs: DockItem, rhs: DockItem) -> Bool {
+    static func == (lhs: MirrorDockItem, rhs: MirrorDockItem) -> Bool {
         lhs.id == rhs.id &&
         lhs.name == rhs.name &&
         lhs.bundleIdentifier == rhs.bundleIdentifier &&
