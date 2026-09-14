@@ -19,7 +19,11 @@ struct CustomDockSettingsView: View {
                     Button("Add Items…", action: addItems)
                 }
             } footer: {
-                Text("Your own dock. Drag apps, files, folders, or links to its screen edge to add them; drag icons to reorder; right-click to rename or remove. While it's empty it stays hidden until you drag something to its edge.")
+                Text(
+                    "Your own dock. Drag apps, files, folders, or links to its screen edge to add them; "
+                        + "drag icons to reorder; right-click to rename or remove. "
+                        + "While it's empty it stays hidden until you drag something to its edge."
+                )
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

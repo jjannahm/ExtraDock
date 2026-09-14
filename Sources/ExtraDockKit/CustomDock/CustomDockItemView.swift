@@ -93,7 +93,7 @@ struct CustomDockItemView: View {
         VStack(spacing: CustomDockLayout.labelGap) {
             Image(nsImage: icon)
                 .resizable()
-                .aspectRatio(contentMode: .fit)
+                .scaledToFit()
                 .frame(width: layout.iconSize, height: layout.iconSize)
                 .grayscale(settings.customMonochrome ? 1.0 : 0.0)
                 .shadow(color: isHovered ? .black.opacity(0.3) : .clear, radius: 4, x: 0, y: 2)

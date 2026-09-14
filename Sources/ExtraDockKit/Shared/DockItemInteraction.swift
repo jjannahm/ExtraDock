@@ -83,7 +83,7 @@ final class DockItemInteractionView: NSView, NSDraggingSource {
     override func mouseDragged(with event: NSEvent) {
         guard !isDragging, let start = mouseDownLocation else { return }
         let distance = hypot(event.locationInWindow.x - start.x, event.locationInWindow.y - start.y)
-        guard distance >= Self.dragThreshold, let pasteboardItem = dragItemProvider?() ?? nil else { return }
+        guard distance >= Self.dragThreshold, let pasteboardItem = dragItemProvider?() else { return }
         isDragging = true
         let draggingItem = NSDraggingItem(pasteboardWriter: pasteboardItem)
         draggingItem.setDraggingFrame(bounds, contents: dragImage)

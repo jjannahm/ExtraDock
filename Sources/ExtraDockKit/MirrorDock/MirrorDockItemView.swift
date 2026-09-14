@@ -22,7 +22,7 @@ struct MirrorDockItemView: View {
             ZStack(alignment: .topTrailing) {
                 Image(nsImage: item.icon)
                     .resizable()
-                    .aspectRatio(contentMode: .fit)
+                    .scaledToFit()
                     .frame(width: tileSize - 8, height: tileSize - 8)
                     .scaleEffect(isHovered ? 1.15 : (isPressed ? 0.88 : 1.0))
                     .offset(bounceVector)
