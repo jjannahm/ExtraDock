@@ -45,7 +45,7 @@ Both docks can hide like the system Dock: out of sight until you rest the pointe
 ## Installation
 
 ```bash
-git clone <this repository>
+git clone https://github.com/jjannahm/ExtraDock.git
 cd ExtraDock
 ./install.sh
 ```
