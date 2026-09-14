@@ -1,0 +1,79 @@
+name: Extradock
+options:
+  bundleIdPrefix: com.extradock
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "16.0"
+  createIntermediateGroups: true
+
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.6.0
+
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    SWIFT_STRICT_CONCURRENCY: targeted
+    ENABLE_HARDENED_RUNTIME: YES
+
+targets:
+  Extradock:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - Extradock
+    info:
+      path: Extradock/Info.plist
+      properties:
+        CFBundleDisplayName: Extradock
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        NSPrincipalClass: NSApplication
+        LSMinimumSystemVersion: "14.0"
+        NSHumanReadableCopyright: "Copyright © 2024 Extradock Contributors. MIT License."
+        LSUIElement: false
+        CFBundleURLTypes:
+          - CFBundleURLName: com.extradock.url
+            CFBundleURLSchemes:
+              - extradock
+        NSAppleEventsUsageDescription: "Extradock needs to control other apps for window management."
+    entitlements:
+      path: Extradock/Extradock.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+        com.apple.security.automation.apple-events: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.extradock.app
+        PRODUCT_NAME: Extradock
+
+  ExtradockTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - ExtradockTests
+    dependencies:
+      - target: Extradock
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.extradock.tests
+        SWIFT_STRICT_CONCURRENCY: targeted
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  Extradock:
+    build:
+      targets:
+        Extradock: all
+    test:
+      targets:
+        - ExtradockTests
+      parallelizeBuild: true
+    run:
+      config: Debug
+    archive:
+      config: Release

@@ -1,0 +1,585 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		02CAE802CD8666667293C984 /* AppIconResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D7D22F9398D69DB184328E5 /* AppIconResolver.swift */; };
+		041E1F4EA3D7B3A271F4850E /* DockViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16516F0D3CE7B5547CCB293E /* DockViewModel.swift */; };
+		0B01A01BB4D57DC0B8BED1C2 /* DockIconCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 062A9DE475BD611D69CDBD8D /* DockIconCell.swift */; };
+		0DAA26491724A4EB40C7E651 /* LaunchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD6BF931C1BCDAA2D2BB87C9 /* LaunchService.swift */; };
+		19E79C3903EDE89CFE158A81 /* PersistenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90066CA39578BF4B3E0EF194 /* PersistenceService.swift */; };
+		20334C46C5560D04C3D62C21 /* PersistenceServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D68F6CE25FFD3C5023EAA8D /* PersistenceServiceTests.swift */; };
+		3016567A804E4B5D6934E019 /* RunningIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01299E55E98E9FE83004F8A0 /* RunningIndicatorView.swift */; };
+		30C45A7959E8672E7346AB06 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C7E37095FDFB81B86E9F344 /* SettingsView.swift */; };
+		3CFCC2F1607E52B9CCA6778F /* DockContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60349E55BC2E353D720AEF88 /* DockContainerView.swift */; };
+		44D24E6CA8FBA330582018A0 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D06134243B9A14907A05440 /* SettingsViewModel.swift */; };
+		4FBF80363FC608737639C735 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 319DD06C860A836158EEA3C5 /* EmptyStateView.swift */; };
+		5223FF942C0C50CEB981A71F /* AppearanceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D64EE53C31FF04FB0BA1C2AE /* AppearanceSettingsView.swift */; };
+		5FEEDA8EC04E16759B927C1B /* DockItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED57D879300286558DC4223E /* DockItemTests.swift */; };
+		668C5609C1A24A73061B52B3 /* VisualEffectBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6873BB079B5D0973DD9656A /* VisualEffectBackground.swift */; };
+		71B25B0C26898AD44CEE6614 /* MainWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93CC950CD7A1D964475439CE /* MainWindowController.swift */; };
+		830AF654907F457E2E9296F6 /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9C627235EDC1542DB70B206 /* SettingsWindowController.swift */; };
+		8FA3BF25222836A2BEAD09BA /* PositionSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBFE56E160D750C84BF959D9 /* PositionSettingsView.swift */; };
+		96B01B5F15978292F6D79642 /* DockGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6857C983D1F9156397C0C6CC /* DockGroup.swift */; };
+		97BA8008BB415D2593D09AD0 /* ExtradockApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94EE7B194C4AD8866B7C9F72 /* ExtradockApp.swift */; };
+		9B72149AB3A3465A719B4BE7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D43C4CD4012E4D4F53A38809 /* AppDelegate.swift */; };
+		A4C8830DAA6C20C36461B177 /* DockViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D92CAB4EDCD0688EDFABDC0F /* DockViewModelTests.swift */; };
+		AA914D9BB571AF068E8503C8 /* DockGroupTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65EEB44EBC287FB8F9D50F5 /* DockGroupTests.swift */; };
+		C24C529DCBC57C5431FBF3AE /* WindowObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7651BFD10E87D9915F3F2E44 /* WindowObserver.swift */; };
+		C3709B267DF5B3D489672FBC /* RunningAppsMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A96D03097DE4E9ECF2D2FB4 /* RunningAppsMonitor.swift */; };
+		C3C57417F81EEA1A2EB781C3 /* DockEdgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4830F59FE7B5E94E69D294D8 /* DockEdgeTests.swift */; };
+		EFA591311EEFBC4DBAB02925 /* DockItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = E632EF8B2C6FBFD66142365D /* DockItem.swift */; };
+		F80A9D87588AAAAE386560D1 /* GeneralSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12F82345C0A904199AC7BD61 /* GeneralSettingsView.swift */; };
+		FCE0806E81EB05EB9983489C /* DockGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2A1B06248072F31E961DC6E /* DockGridView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		7AF80E311B1F0671605AF2D5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3D59F837D0D5D6822B7E1D70 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 809334B11B55433B1C3FD30A;
+			remoteInfo = Extradock;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		01299E55E98E9FE83004F8A0 /* RunningIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningIndicatorView.swift; sourceTree = "<group>"; };
+		062A9DE475BD611D69CDBD8D /* DockIconCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockIconCell.swift; sourceTree = "<group>"; };
+		12F82345C0A904199AC7BD61 /* GeneralSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsView.swift; sourceTree = "<group>"; };
+		16516F0D3CE7B5547CCB293E /* DockViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockViewModel.swift; sourceTree = "<group>"; };
+		1C7E37095FDFB81B86E9F344 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		22FA6EFABAA3C7F7FDBCBB02 /* ExtradockTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExtradockTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2D06134243B9A14907A05440 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
+		319DD06C860A836158EEA3C5 /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
+		3D7D22F9398D69DB184328E5 /* AppIconResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIconResolver.swift; sourceTree = "<group>"; };
+		4830F59FE7B5E94E69D294D8 /* DockEdgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockEdgeTests.swift; sourceTree = "<group>"; };
+		60349E55BC2E353D720AEF88 /* DockContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockContainerView.swift; sourceTree = "<group>"; };
+		6857C983D1F9156397C0C6CC /* DockGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockGroup.swift; sourceTree = "<group>"; };
+		7651BFD10E87D9915F3F2E44 /* WindowObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowObserver.swift; sourceTree = "<group>"; };
+		89C5BA1EF0983FBC0D9DB8A8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8A96D03097DE4E9ECF2D2FB4 /* RunningAppsMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningAppsMonitor.swift; sourceTree = "<group>"; };
+		8D68F6CE25FFD3C5023EAA8D /* PersistenceServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceServiceTests.swift; sourceTree = "<group>"; };
+		90066CA39578BF4B3E0EF194 /* PersistenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceService.swift; sourceTree = "<group>"; };
+		93CC950CD7A1D964475439CE /* MainWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowController.swift; sourceTree = "<group>"; };
+		94EE7B194C4AD8866B7C9F72 /* ExtradockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtradockApp.swift; sourceTree = "<group>"; };
+		A65EEB44EBC287FB8F9D50F5 /* DockGroupTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockGroupTests.swift; sourceTree = "<group>"; };
+		A6873BB079B5D0973DD9656A /* VisualEffectBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualEffectBackground.swift; sourceTree = "<group>"; };
+		B828E95F81E5E0DF3079DDA4 /* Extradock.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Extradock.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BD6BF931C1BCDAA2D2BB87C9 /* LaunchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchService.swift; sourceTree = "<group>"; };
+		C2A1B06248072F31E961DC6E /* DockGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockGridView.swift; sourceTree = "<group>"; };
+		C9C627235EDC1542DB70B206 /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
+		D43C4CD4012E4D4F53A38809 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		D64EE53C31FF04FB0BA1C2AE /* AppearanceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceSettingsView.swift; sourceTree = "<group>"; };
+		D92CAB4EDCD0688EDFABDC0F /* DockViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockViewModelTests.swift; sourceTree = "<group>"; };
+		DA2C2A58E93E55386B26C23C /* Extradock.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Extradock.entitlements; sourceTree = "<group>"; };
+		E632EF8B2C6FBFD66142365D /* DockItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockItem.swift; sourceTree = "<group>"; };
+		EBFE56E160D750C84BF959D9 /* PositionSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PositionSettingsView.swift; sourceTree = "<group>"; };
+		ED57D879300286558DC4223E /* DockItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockItemTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		038E689978130601ED9F8C9E /* SettingsWindow */ = {
+			isa = PBXGroup;
+			children = (
+				D64EE53C31FF04FB0BA1C2AE /* AppearanceSettingsView.swift */,
+				12F82345C0A904199AC7BD61 /* GeneralSettingsView.swift */,
+				EBFE56E160D750C84BF959D9 /* PositionSettingsView.swift */,
+				1C7E37095FDFB81B86E9F344 /* SettingsView.swift */,
+			);
+			path = SettingsWindow;
+			sourceTree = "<group>";
+		};
+		1627F815D29034B7AF4E0A89 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		1E69CB46007F0D00E15D8012 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				319DD06C860A836158EEA3C5 /* EmptyStateView.swift */,
+				01299E55E98E9FE83004F8A0 /* RunningIndicatorView.swift */,
+				A6873BB079B5D0973DD9656A /* VisualEffectBackground.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		211F9C75D697B4654E135A69 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				D43C4CD4012E4D4F53A38809 /* AppDelegate.swift */,
+				94EE7B194C4AD8866B7C9F72 /* ExtradockApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		298B1608F3EDF827334303B6 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				3D7D22F9398D69DB184328E5 /* AppIconResolver.swift */,
+				BD6BF931C1BCDAA2D2BB87C9 /* LaunchService.swift */,
+				90066CA39578BF4B3E0EF194 /* PersistenceService.swift */,
+				8A96D03097DE4E9ECF2D2FB4 /* RunningAppsMonitor.swift */,
+				7651BFD10E87D9915F3F2E44 /* WindowObserver.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		8305F9E9C83649D048A5E556 /* Extradock */ = {
+			isa = PBXGroup;
+			children = (
+				DA2C2A58E93E55386B26C23C /* Extradock.entitlements */,
+				89C5BA1EF0983FBC0D9DB8A8 /* Info.plist */,
+				211F9C75D697B4654E135A69 /* App */,
+				D7C2DA2D1DAE7237B17C0668 /* Controllers */,
+				E0CD546281C1EB4654625B15 /* Models */,
+				298B1608F3EDF827334303B6 /* Services */,
+				1627F815D29034B7AF4E0A89 /* Utilities */,
+				F407C9EABE0E1B8159847F1C /* ViewModels */,
+				9EA39C2BA0575CDDDE49632E /* Views */,
+			);
+			path = Extradock;
+			sourceTree = "<group>";
+		};
+		9EA39C2BA0575CDDDE49632E /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				60349E55BC2E353D720AEF88 /* DockContainerView.swift */,
+				C2A1B06248072F31E961DC6E /* DockGridView.swift */,
+				062A9DE475BD611D69CDBD8D /* DockIconCell.swift */,
+				1E69CB46007F0D00E15D8012 /* Components */,
+				038E689978130601ED9F8C9E /* SettingsWindow */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A6FFA7BAADDF55CAB8273159 = {
+			isa = PBXGroup;
+			children = (
+				8305F9E9C83649D048A5E556 /* Extradock */,
+				D819BB0E13E4DB2A3C568D3A /* ExtradockTests */,
+				AE74B62C88F8C8FBDA51E69B /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AE74B62C88F8C8FBDA51E69B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B828E95F81E5E0DF3079DDA4 /* Extradock.app */,
+				22FA6EFABAA3C7F7FDBCBB02 /* ExtradockTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D7C2DA2D1DAE7237B17C0668 /* Controllers */ = {
+			isa = PBXGroup;
+			children = (
+				93CC950CD7A1D964475439CE /* MainWindowController.swift */,
+				C9C627235EDC1542DB70B206 /* SettingsWindowController.swift */,
+			);
+			path = Controllers;
+			sourceTree = "<group>";
+		};
+		D819BB0E13E4DB2A3C568D3A /* ExtradockTests */ = {
+			isa = PBXGroup;
+			children = (
+				4830F59FE7B5E94E69D294D8 /* DockEdgeTests.swift */,
+				A65EEB44EBC287FB8F9D50F5 /* DockGroupTests.swift */,
+				ED57D879300286558DC4223E /* DockItemTests.swift */,
+				D92CAB4EDCD0688EDFABDC0F /* DockViewModelTests.swift */,
+				8D68F6CE25FFD3C5023EAA8D /* PersistenceServiceTests.swift */,
+			);
+			path = ExtradockTests;
+			sourceTree = "<group>";
+		};
+		E0CD546281C1EB4654625B15 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				6857C983D1F9156397C0C6CC /* DockGroup.swift */,
+				E632EF8B2C6FBFD66142365D /* DockItem.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		F407C9EABE0E1B8159847F1C /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				16516F0D3CE7B5547CCB293E /* DockViewModel.swift */,
+				2D06134243B9A14907A05440 /* SettingsViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6CCDBF03FABC9D88D010E5A4 /* ExtradockTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 597F1392474091919F6B4D72 /* Build configuration list for PBXNativeTarget "ExtradockTests" */;
+			buildPhases = (
+				C7C16DE059473BFD437D5C7F /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3313044F6473054EF092727F /* PBXTargetDependency */,
+			);
+			name = ExtradockTests;
+			packageProductDependencies = (
+			);
+			productName = ExtradockTests;
+			productReference = 22FA6EFABAA3C7F7FDBCBB02 /* ExtradockTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		809334B11B55433B1C3FD30A /* Extradock */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 74E2DF818B18AA8221077BE1 /* Build configuration list for PBXNativeTarget "Extradock" */;
+			buildPhases = (
+				9E8783A17BE477ABD9D7F195 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Extradock;
+			packageProductDependencies = (
+			);
+			productName = Extradock;
+			productReference = B828E95F81E5E0DF3079DDA4 /* Extradock.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		3D59F837D0D5D6822B7E1D70 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+			};
+			buildConfigurationList = FEEC1729DCE674CA5CDECBEA /* Build configuration list for PBXProject "Extradock" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = A6FFA7BAADDF55CAB8273159;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				3734170B1555BEC8868C1298 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				809334B11B55433B1C3FD30A /* Extradock */,
+				6CCDBF03FABC9D88D010E5A4 /* ExtradockTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9E8783A17BE477ABD9D7F195 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9B72149AB3A3465A719B4BE7 /* AppDelegate.swift in Sources */,
+				02CAE802CD8666667293C984 /* AppIconResolver.swift in Sources */,
+				5223FF942C0C50CEB981A71F /* AppearanceSettingsView.swift in Sources */,
+				3CFCC2F1607E52B9CCA6778F /* DockContainerView.swift in Sources */,
+				FCE0806E81EB05EB9983489C /* DockGridView.swift in Sources */,
+				96B01B5F15978292F6D79642 /* DockGroup.swift in Sources */,
+				0B01A01BB4D57DC0B8BED1C2 /* DockIconCell.swift in Sources */,
+				EFA591311EEFBC4DBAB02925 /* DockItem.swift in Sources */,
+				041E1F4EA3D7B3A271F4850E /* DockViewModel.swift in Sources */,
+				4FBF80363FC608737639C735 /* EmptyStateView.swift in Sources */,
+				97BA8008BB415D2593D09AD0 /* ExtradockApp.swift in Sources */,
+				F80A9D87588AAAAE386560D1 /* GeneralSettingsView.swift in Sources */,
+				0DAA26491724A4EB40C7E651 /* LaunchService.swift in Sources */,
+				71B25B0C26898AD44CEE6614 /* MainWindowController.swift in Sources */,
+				19E79C3903EDE89CFE158A81 /* PersistenceService.swift in Sources */,
+				8FA3BF25222836A2BEAD09BA /* PositionSettingsView.swift in Sources */,
+				C3709B267DF5B3D489672FBC /* RunningAppsMonitor.swift in Sources */,
+				3016567A804E4B5D6934E019 /* RunningIndicatorView.swift in Sources */,
+				30C45A7959E8672E7346AB06 /* SettingsView.swift in Sources */,
+				44D24E6CA8FBA330582018A0 /* SettingsViewModel.swift in Sources */,
+				830AF654907F457E2E9296F6 /* SettingsWindowController.swift in Sources */,
+				668C5609C1A24A73061B52B3 /* VisualEffectBackground.swift in Sources */,
+				C24C529DCBC57C5431FBF3AE /* WindowObserver.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C7C16DE059473BFD437D5C7F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C3C57417F81EEA1A2EB781C3 /* DockEdgeTests.swift in Sources */,
+				AA914D9BB571AF068E8503C8 /* DockGroupTests.swift in Sources */,
+				5FEEDA8EC04E16759B927C1B /* DockItemTests.swift in Sources */,
+				A4C8830DAA6C20C36461B177 /* DockViewModelTests.swift in Sources */,
+				20334C46C5560D04C3D62C21 /* PersistenceServiceTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		3313044F6473054EF092727F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 809334B11B55433B1C3FD30A /* Extradock */;
+			targetProxy = 7AF80E311B1F0671605AF2D5 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		3511AF5EBE34CADADAE68661 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.extradock.tests;
+				SDKROOT = macosx;
+				SWIFT_STRICT_CONCURRENCY = targeted;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Extradock.app/Contents/MacOS/Extradock";
+			};
+			name = Release;
+		};
+		5A59B716F6D9683BA9E9ED92 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Extradock/Extradock.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Extradock/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.extradock.app;
+				PRODUCT_NAME = Extradock;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		733F7B471523B39565E05767 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = targeted;
+				SWIFT_VERSION = 5.10;
+			};
+			name = Debug;
+		};
+		9300D78ABFB10E0F561A30F0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Extradock/Extradock.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Extradock/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.extradock.app;
+				PRODUCT_NAME = Extradock;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		996DCBB570B82E04BBB607B3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.extradock.tests;
+				SDKROOT = macosx;
+				SWIFT_STRICT_CONCURRENCY = targeted;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Extradock.app/Contents/MacOS/Extradock";
+			};
+			name = Debug;
+		};
+		AD57F3B7499E96C46EE29448 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = targeted;
+				SWIFT_VERSION = 5.10;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		597F1392474091919F6B4D72 /* Build configuration list for PBXNativeTarget "ExtradockTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				996DCBB570B82E04BBB607B3 /* Debug */,
+				3511AF5EBE34CADADAE68661 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		74E2DF818B18AA8221077BE1 /* Build configuration list for PBXNativeTarget "Extradock" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9300D78ABFB10E0F561A30F0 /* Debug */,
+				5A59B716F6D9683BA9E9ED92 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		FEEC1729DCE674CA5CDECBEA /* Build configuration list for PBXProject "Extradock" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				733F7B471523B39565E05767 /* Debug */,
+				AD57F3B7499E96C46EE29448 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		3734170B1555BEC8868C1298 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+	};
+	rootObject = 3D59F837D0D5D6822B7E1D70 /* Project object */;
+}
