@@ -19,15 +19,18 @@ This repository merges two open-source projects, with both histories preserved:
 - Click to launch or switch to apps; folders open in Finder
 - Right-click shows the Dock's own app menu (needs Accessibility access)
 - Live sync: updates within seconds when you change your Dock
-- Scale slider and optional hide-after-inactivity
+- Resize it by dragging its inner edge, or with the Size slider
 
 ### Custom Dock
-- Drag apps, files, folders, or links onto it; drag icons to reorder
+- Drag apps, files, folders, or links to it; drag icons to reorder
+- While empty it stays hidden, and slides in as a drop target when you drag something to its edge
 - Right-click to open, show in Finder, rename, or remove
 - Place it on the bottom, left, or right edge of any display, with an offset
-- Icon size, spacing, labels, monochrome icons, opacity, hover magnification
-- Optional auto-hide when the pointer leaves
+- Resize it by dragging its inner edge; spacing, labels, monochrome icons, opacity, hover magnification
 - Running-app indicators; saved in `~/Library/Application Support/ExtraDock/`
+
+### Hiding
+Both docks can hide like the system Dock: out of sight until you rest the pointer at the screen edge, then they slide in and slide away shortly after the pointer leaves. They follow your Dock's "Automatically hide and show the Dock" setting until you change it in ExtraDock's Settings. The pointer has to pause at the edge briefly, so moving onto a neighboring display doesn't open them.
 
 ### Both
 - One menu bar icon to toggle each dock, add items, and open Settings
@@ -60,7 +63,7 @@ open Package.swift   # work in Xcode
 ## Usage
 
 1. Launch ExtraDock — a dock icon appears in the menu bar.
-2. The Mirror Dock appears on displays that don't have the system Dock. The Custom Dock appears at the bottom of your main display, ready for you to drop apps on it.
+2. The Mirror Dock appears on displays that don't have the system Dock. The Custom Dock lives at the bottom of your main display; drag apps to that edge (or use **Add to Custom Dock…** in the menu) to fill it.
 3. Click the menu bar icon to turn either dock on or off, add items to the Custom Dock, refresh the Mirror Dock, or open **Settings** (General, Mirror Dock, Custom Dock).
 
 ### Accessibility access (optional)

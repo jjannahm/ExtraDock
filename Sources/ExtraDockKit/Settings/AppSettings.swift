@@ -17,7 +17,6 @@ public final class AppSettings {
     // MARK: Ranges
 
     static let mirrorScaleRange: ClosedRange<Double> = 0.5...2.0
-    static let autoHideDelayRange: ClosedRange<Double> = 1...30
     static let iconSizeRange: ClosedRange<Double> = 32...128
     static let iconSpacingRange: ClosedRange<Double> = 0...32
     static let opacityRange: ClosedRange<Double> = 0.1...1.0
@@ -31,8 +30,8 @@ public final class AppSettings {
     /// entry mirror the Dock unless they are the display the system Dock is on.
     var mirrorDisplays: [String: Bool] { didSet { store(mirrorDisplays, for: Keys.mirrorDisplays) } }
     var mirrorScale: Double { didSet { store(mirrorScale, for: Keys.mirrorScale) } }
+    /// Slide out of sight until the pointer reaches the screen edge, like the system Dock.
     var mirrorAutoHide: Bool { didSet { store(mirrorAutoHide, for: Keys.mirrorAutoHide) } }
-    var mirrorAutoHideDelay: Double { didSet { store(mirrorAutoHideDelay, for: Keys.mirrorAutoHideDelay) } }
 
     // MARK: Custom Dock
 
@@ -51,20 +50,24 @@ public final class AppSettings {
         didSet { store(customMagnificationScale, for: Keys.customMagnificationScale) }
     }
     var customAutoHide: Bool { didSet { store(customAutoHide, for: Keys.customAutoHide) } }
-    var customAutoHideDelay: Double { didSet { store(customAutoHideDelay, for: Keys.customAutoHideDelay) } }
 
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let notificationCenter: NotificationCenter
 
-    public init(defaults: UserDefaults = .standard, notificationCenter: NotificationCenter = .default) {
+    /// - Parameter systemDockAutoHides: whether the system Dock hides automatically;
+    ///   both docks hide the same way until the user chooses otherwise.
+    public init(
+        defaults: UserDefaults = .standard,
+        notificationCenter: NotificationCenter = .default,
+        systemDockAutoHides: Bool = false
+    ) {
         self.defaults = defaults
         self.notificationCenter = notificationCenter
 
         mirrorEnabled = defaults.object(forKey: Keys.mirrorEnabled) as? Bool ?? true
         mirrorDisplays = Self.readBoolDictionary(defaults, Keys.mirrorDisplays)
         mirrorScale = Self.read(defaults, Keys.mirrorScale, default: 1.0, in: Self.mirrorScaleRange)
-        mirrorAutoHide = defaults.object(forKey: Keys.mirrorAutoHide) as? Bool ?? false
-        mirrorAutoHideDelay = Self.read(defaults, Keys.mirrorAutoHideDelay, default: 5, in: Self.autoHideDelayRange)
+        mirrorAutoHide = defaults.object(forKey: Keys.mirrorAutoHide) as? Bool ?? systemDockAutoHides
 
         customEnabled = defaults.object(forKey: Keys.customEnabled) as? Bool ?? true
         customDisplay = defaults.string(forKey: Keys.customDisplay) ?? ""
@@ -79,8 +82,25 @@ public final class AppSettings {
         customMagnificationScale = Self.read(
             defaults, Keys.customMagnificationScale, default: 1.5, in: Self.magnificationScaleRange
         )
-        customAutoHide = defaults.object(forKey: Keys.customAutoHide) as? Bool ?? false
-        customAutoHideDelay = Self.read(defaults, Keys.customAutoHideDelay, default: 1, in: Self.autoHideDelayRange)
+        customAutoHide = defaults.object(forKey: Keys.customAutoHide) as? Bool ?? systemDockAutoHides
+    }
+
+    // MARK: Resizing by dragging
+
+    /// Custom Dock icon size after dragging its edge `distance` points into the screen.
+    static func customIconSize(resizingFrom startSize: Double, by distance: CGFloat) -> Double {
+        clamp((startSize + Double(distance)).rounded(), to: iconSizeRange)
+    }
+
+    /// Mirror Dock scale after dragging its edge `distance` points into the screen.
+    /// The dock's depth is `(tileSize + 16) × scale`, so this keeps the edge under the pointer.
+    static func mirrorScale(resizingFrom startScale: Double, by distance: CGFloat, tileSize: CGFloat) -> Double {
+        let depthPerScale = Double(max(1, tileSize + 16))
+        return clamp(((startScale + Double(distance) / depthPerScale) * 100).rounded() / 100, to: mirrorScaleRange)
+    }
+
+    private static func clamp(_ value: Double, to range: ClosedRange<Double>) -> Double {
+        min(max(value, range.lowerBound), range.upperBound)
     }
 
     // MARK: Per-display mirroring
@@ -106,8 +126,7 @@ public final class AppSettings {
         default fallback: Double,
         in range: ClosedRange<Double>
     ) -> Double {
-        let value = (defaults.object(forKey: key) as? NSNumber)?.doubleValue ?? fallback
-        return min(max(value, range.lowerBound), range.upperBound)
+        clamp((defaults.object(forKey: key) as? NSNumber)?.doubleValue ?? fallback, to: range)
     }
 
     // UserDefaults hands dictionaries back with NSNumber values.
@@ -121,7 +140,6 @@ public final class AppSettings {
         static let mirrorDisplays = "mirror.displays"
         static let mirrorScale = "mirror.scale"
         static let mirrorAutoHide = "mirror.autoHide"
-        static let mirrorAutoHideDelay = "mirror.autoHideDelay"
         static let customEnabled = "custom.enabled"
         static let customDisplay = "custom.display"
         static let customEdge = "custom.edge"
@@ -134,6 +152,5 @@ public final class AppSettings {
         static let customMagnification = "custom.magnification"
         static let customMagnificationScale = "custom.magnificationScale"
         static let customAutoHide = "custom.autoHide"
-        static let customAutoHideDelay = "custom.autoHideDelay"
     }
 }

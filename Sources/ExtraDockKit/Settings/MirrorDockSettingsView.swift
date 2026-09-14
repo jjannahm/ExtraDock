@@ -47,21 +47,27 @@ struct MirrorDockSettingsView: View {
             }
             .disabled(!settings.mirrorEnabled)
 
-            Section("Appearance") {
-                LabeledContent("Scale: \(Int((settings.mirrorScale * 100).rounded()))%") {
-                    Slider(value: $settings.mirrorScale, in: AppSettings.mirrorScaleRange, step: 0.1)
+            Section {
+                LabeledContent("Size: \(Int((settings.mirrorScale * 100).rounded()))%") {
+                    Slider(value: $settings.mirrorScale, in: AppSettings.mirrorScaleRange, step: 0.05)
                 }
+            } header: {
+                Text("Appearance")
+            } footer: {
+                Text("You can also drag the dock's inner edge to resize it.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             .disabled(!settings.mirrorEnabled)
 
-            Section("Behavior") {
-                Toggle("Hide dock after inactivity", isOn: $settings.mirrorAutoHide)
-
-                if settings.mirrorAutoHide {
-                    LabeledContent("Hide after \(Int(settings.mirrorAutoHideDelay))s") {
-                        Slider(value: $settings.mirrorAutoHideDelay, in: AppSettings.autoHideDelayRange, step: 1)
-                    }
-                }
+            Section {
+                Toggle("Automatically hide and show the Mirror Dock", isOn: $settings.mirrorAutoHide)
+            } header: {
+                Text("Behavior")
+            } footer: {
+                Text("Like the system Dock: it stays out of sight until you move the pointer to the screen edge.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             .disabled(!settings.mirrorEnabled)
         }

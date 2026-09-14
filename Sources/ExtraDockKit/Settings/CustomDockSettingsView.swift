@@ -18,7 +18,7 @@ struct CustomDockSettingsView: View {
                     Button("Add Items…", action: addItems)
                 }
             } footer: {
-                Text("Your own dock. Drag apps, files, folders, or links onto it; drag icons to reorder; right-click to rename or remove.")
+                Text("Your own dock. Drag apps, files, folders, or links to its screen edge to add them; drag icons to reorder; right-click to rename or remove. While it's empty it stays hidden until you drag something to its edge.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -49,8 +49,9 @@ struct CustomDockSettingsView: View {
 
             Section("Icons") {
                 LabeledContent("Icon Size: \(Int(settings.customIconSize))px") {
-                    Slider(value: $settings.customIconSize, in: AppSettings.iconSizeRange, step: 4)
+                    Slider(value: $settings.customIconSize, in: AppSettings.iconSizeRange, step: 1)
                 }
+                .help("You can also drag the dock's inner edge to resize it.")
                 LabeledContent("Spacing: \(Int(settings.customIconSpacing))px") {
                     Slider(value: $settings.customIconSpacing, in: AppSettings.iconSpacingRange, step: 1)
                 }
@@ -77,13 +78,14 @@ struct CustomDockSettingsView: View {
                 }
             }
 
-            Section("Behavior") {
-                Toggle("Automatically hide when the pointer leaves", isOn: $settings.customAutoHide)
-                if settings.customAutoHide {
-                    LabeledContent("Hide after \(Int(settings.customAutoHideDelay))s") {
-                        Slider(value: $settings.customAutoHideDelay, in: AppSettings.autoHideDelayRange, step: 1)
-                    }
-                }
+            Section {
+                Toggle("Automatically hide and show the Custom Dock", isOn: $settings.customAutoHide)
+            } header: {
+                Text("Behavior")
+            } footer: {
+                Text("Like the system Dock: it stays out of sight until you move the pointer to the screen edge. Drag the dock's inner edge to resize it.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)

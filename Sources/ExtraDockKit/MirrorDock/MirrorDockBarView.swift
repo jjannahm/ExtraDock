@@ -15,6 +15,8 @@ struct MirrorDockBarView: View {
     let dockState: MirrorDockState
     let presentation: MirrorDockPresentation
     let launchService: LaunchService
+    let beginResize: () -> CGFloat
+    let resize: (CGFloat, CGFloat) -> Void
 
     var body: some View {
         let layout = presentation.layout
@@ -50,6 +52,9 @@ struct MirrorDockBarView: View {
         .padding(isVertical ? .horizontal : .vertical, 4)
         .frame(width: layout.panelSize.width, height: layout.panelSize.height)
         .background(VisualEffectBackground(cornerRadius: MirrorDockLayout.cornerRadius))
+        .overlay {
+            DockResizeHandle(edge: layout.edge, beginResize: beginResize, resize: resize)
+        }
     }
 
     private func itemView(_ item: MirrorDockItem, layout: MirrorDockLayout) -> some View {

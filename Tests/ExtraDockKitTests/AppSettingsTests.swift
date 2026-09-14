@@ -21,8 +21,8 @@ final class AppSettingsTests: XCTestCase {
         super.tearDown()
     }
 
-    private func makeSettings() -> AppSettings {
-        AppSettings(defaults: defaults, notificationCenter: center)
+    private func makeSettings(systemDockAutoHides: Bool = false) -> AppSettings {
+        AppSettings(defaults: defaults, notificationCenter: center, systemDockAutoHides: systemDockAutoHides)
     }
 
     func testDefaults() {
@@ -30,7 +30,7 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertTrue(settings.mirrorEnabled)
         XCTAssertEqual(settings.mirrorScale, 1.0)
         XCTAssertFalse(settings.mirrorAutoHide)
-        XCTAssertEqual(settings.mirrorAutoHideDelay, 5)
+        XCTAssertFalse(settings.customAutoHide)
         XCTAssertTrue(settings.customEnabled)
         XCTAssertEqual(settings.customDisplay, "")
         XCTAssertEqual(settings.customEdge, .bottom)
@@ -39,6 +39,34 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(settings.customOpacity, 1.0)
         XCTAssertFalse(settings.customMagnification)
         XCTAssertEqual(settings.customMagnificationScale, 1.5)
+    }
+
+    func testAutoHideDefaultsToSystemDockSetting() {
+        let settings = makeSettings(systemDockAutoHides: true)
+        XCTAssertTrue(settings.mirrorAutoHide)
+        XCTAssertTrue(settings.customAutoHide)
+    }
+
+    func testChosenAutoHideOverridesSystemDockSetting() {
+        makeSettings(systemDockAutoHides: true).customAutoHide = false
+        let reloaded = makeSettings(systemDockAutoHides: true)
+        XCTAssertFalse(reloaded.customAutoHide)
+        XCTAssertTrue(reloaded.mirrorAutoHide)
+    }
+
+    func testCustomIconSizeResizing() {
+        XCTAssertEqual(AppSettings.customIconSize(resizingFrom: 64, by: 20), 84)
+        XCTAssertEqual(AppSettings.customIconSize(resizingFrom: 64, by: -10.4), 54)
+        XCTAssertEqual(AppSettings.customIconSize(resizingFrom: 64, by: 500), AppSettings.iconSizeRange.upperBound)
+        XCTAssertEqual(AppSettings.customIconSize(resizingFrom: 64, by: -500), AppSettings.iconSizeRange.lowerBound)
+    }
+
+    func testMirrorScaleResizingKeepsEdgeUnderPointer() {
+        // An 80pt Dock is (80 + 16) × scale deep, so 48pt of drag is half a step of scale.
+        XCTAssertEqual(AppSettings.mirrorScale(resizingFrom: 1.0, by: -48, tileSize: 80), 0.5, accuracy: 0.001)
+        XCTAssertEqual(AppSettings.mirrorScale(resizingFrom: 1.0, by: 24, tileSize: 80), 1.25, accuracy: 0.001)
+        XCTAssertEqual(AppSettings.mirrorScale(resizingFrom: 1.0, by: -1000, tileSize: 80), AppSettings.mirrorScaleRange.lowerBound)
+        XCTAssertEqual(AppSettings.mirrorScale(resizingFrom: 1.0, by: 1000, tileSize: 80), AppSettings.mirrorScaleRange.upperBound)
     }
 
     func testValuesPersistAcrossInstances() {

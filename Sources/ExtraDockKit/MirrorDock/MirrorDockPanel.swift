@@ -7,7 +7,7 @@ final class MirrorDockPanel: DockPanel {
     private let dockState: MirrorDockState
     private let presentation: MirrorDockPresentation
 
-    init(dockState: MirrorDockState, launchService: LaunchService) {
+    init(dockState: MirrorDockState, launchService: LaunchService, settings: AppSettings) {
         self.dockState = dockState
         self.presentation = MirrorDockPresentation(layout: MirrorDockLayout(
             edge: dockState.edge,
@@ -16,13 +16,26 @@ final class MirrorDockPanel: DockPanel {
             baseTileSize: dockState.tileSize,
             scale: 1
         ))
-        // Like extradock, the mirror stays out of full-screen Spaces and hides after inactivity.
-        super.init(autoHideMode: .afterInactivity, showsOverFullScreenApps: false)
-        setRootView(MirrorDockBarView(dockState: dockState, presentation: presentation, launchService: launchService))
+        // Like extradock, the mirror stays out of full-screen Spaces.
+        super.init(showsOverFullScreenApps: false)
+        setRootView(MirrorDockBarView(
+            dockState: dockState,
+            presentation: presentation,
+            launchService: launchService,
+            beginResize: { [weak settings] in
+                CGFloat(settings?.mirrorScale ?? 1)
+            },
+            resize: { [weak settings, weak dockState] startScale, distance in
+                guard let settings, let dockState else { return }
+                settings.mirrorScale = AppSettings.mirrorScale(
+                    resizingFrom: Double(startScale), by: distance, tileSize: dockState.tileSize
+                )
+            }
+        ))
     }
 
     /// Sizes and positions the panel on `screen` for the current Dock contents.
-    func layout(on screen: NSScreen, scale: CGFloat) {
+    func layout(on screen: NSScreen, scale: CGFloat, autoHide: Bool) {
         let visibleFrame = screen.visibleFrame
         let edge = dockState.edge
         let layout = MirrorDockLayout(
@@ -37,6 +50,11 @@ final class MirrorDockPanel: DockPanel {
             presentation.layout = layout
         }
         let origin = DockGeometry.origin(edge: edge, size: layout.panelSize, in: visibleFrame)
-        place(frame: NSRect(origin: origin, size: layout.panelSize), edge: edge, screenFrame: screen.frame)
+        update(
+            frame: NSRect(origin: origin, size: layout.panelSize),
+            edge: edge,
+            screenFrame: screen.frame,
+            visibility: autoHide ? .autoHide : .pinned
+        )
     }
 }

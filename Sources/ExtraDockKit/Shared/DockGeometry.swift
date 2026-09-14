@@ -71,6 +71,24 @@ enum DockGeometry {
         edge.isVertical ? visibleFrame.height : visibleFrame.width
     }
 
+    /// Where an auto-hidden dock rests: slid fully past its screen edge.
+    static func hiddenFrame(for frame: CGRect, edge: DockEdge) -> CGRect {
+        switch edge {
+        case .bottom: return frame.offsetBy(dx: 0, dy: -frame.height)
+        case .left: return frame.offsetBy(dx: -frame.width, dy: 0)
+        case .right: return frame.offsetBy(dx: frame.width, dy: 0)
+        }
+    }
+
+    /// How far the pointer moved away from the screen edge (into the screen) between two points.
+    static func outwardDistance(from start: CGPoint, to end: CGPoint, edge: DockEdge) -> CGFloat {
+        switch edge {
+        case .bottom: return end.y - start.y
+        case .left: return end.x - start.x
+        case .right: return start.x - end.x
+        }
+    }
+
     private static func clamp(_ value: CGFloat, lower: CGFloat, upper: CGFloat) -> CGFloat {
         guard upper >= lower else { return lower }
         return min(max(value, lower), upper)

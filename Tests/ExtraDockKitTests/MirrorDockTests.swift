@@ -63,6 +63,13 @@ final class DockConfigReaderTests: XCTestCase {
         XCTAssertEqual(config.edge, .left)
     }
 
+    func testParse_readsAutoHide() throws {
+        XCTAssertFalse(DockConfigReader.parse(data: try plistData(samplePlist)).autoHides)
+        var plist = samplePlist
+        plist["autohide"] = true
+        XCTAssertTrue(DockConfigReader.parse(data: try plistData(plist)).autoHides)
+    }
+
     func testParse_acceptsRealTileSize() throws {
         var plist = samplePlist
         plist["tilesize"] = 47.5

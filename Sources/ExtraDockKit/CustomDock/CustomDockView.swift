@@ -8,6 +8,8 @@ struct CustomDockView: View {
     let viewModel: CustomDockViewModel
     let settings: AppSettings
     let menu: (CustomDockItem) -> NSMenu
+    let beginResize: () -> CGFloat
+    let resize: (CGFloat, CGFloat) -> Void
 
     var body: some View {
         let layout = viewModel.layout
@@ -36,6 +38,11 @@ struct CustomDockView: View {
         .overlay(alignment: .topLeading) {
             if let index = viewModel.dropIndex, !viewModel.items.isEmpty {
                 insertionMarker(layout: layout, index: index)
+            }
+        }
+        .overlay {
+            if !viewModel.items.isEmpty {
+                DockResizeHandle(edge: layout.edge, beginResize: beginResize, resize: resize)
             }
         }
     }

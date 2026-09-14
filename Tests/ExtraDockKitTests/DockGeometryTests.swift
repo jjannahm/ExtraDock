@@ -106,6 +106,22 @@ final class DockGeometryTests: XCTestCase {
         XCTAssertFalse(DockGeometry.isPoint(CGPoint(x: 900, y: -5), near: .bottom, of: screen, band: 8))
     }
 
+    func testHiddenFrameSlidesPastTheEdge() {
+        let frame = CGRect(x: 100, y: 0, width: 400, height: 80)
+        XCTAssertEqual(DockGeometry.hiddenFrame(for: frame, edge: .bottom), CGRect(x: 100, y: -80, width: 400, height: 80))
+        let side = CGRect(x: 1416, y: 100, width: 96, height: 752)
+        XCTAssertEqual(DockGeometry.hiddenFrame(for: side, edge: .right).minX, 1512)
+        XCTAssertEqual(DockGeometry.hiddenFrame(for: CGRect(x: 0, y: 100, width: 96, height: 752), edge: .left).maxX, 0)
+    }
+
+    func testOutwardDistance() {
+        let start = CGPoint(x: 1000, y: 100)
+        XCTAssertEqual(DockGeometry.outwardDistance(from: start, to: CGPoint(x: 1000, y: 130), edge: .bottom), 30)
+        XCTAssertEqual(DockGeometry.outwardDistance(from: start, to: CGPoint(x: 1030, y: 100), edge: .left), 30)
+        // Dragging a right-edge dock's inner edge to the left makes it bigger.
+        XCTAssertEqual(DockGeometry.outwardDistance(from: start, to: CGPoint(x: 970, y: 100), edge: .right), 30)
+    }
+
     func testAvailableLength() {
         XCTAssertEqual(DockGeometry.availableLength(along: .bottom, in: screen), 1920)
         XCTAssertEqual(DockGeometry.availableLength(along: .left, in: screen), 1080)

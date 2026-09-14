@@ -39,7 +39,7 @@ final class CustomDockController {
     }
 
     private func makePanel() -> DockPanel {
-        let panel = DockPanel(autoHideMode: .afterPointerLeaves, showsOverFullScreenApps: true)
+        let panel = DockPanel(showsOverFullScreenApps: true)
         let dropView = CustomDockDropView(frame: .zero)
         dropView.layoutProvider = { [weak self] in
             self?.viewModel.layout ?? .placeholder
@@ -51,9 +51,19 @@ final class CustomDockController {
         dropView.onDrop = { [weak self] drop in
             self?.perform(drop) ?? false
         }
-        let rootView = CustomDockView(viewModel: viewModel, settings: settings) { [weak self] item in
-            self?.menu(for: item) ?? NSMenu()
-        }
+        let rootView = CustomDockView(
+            viewModel: viewModel,
+            settings: settings,
+            menu: { [weak self] item in
+                self?.menu(for: item) ?? NSMenu()
+            },
+            beginResize: { [weak self] in
+                CGFloat(self?.settings.customIconSize ?? 64)
+            },
+            resize: { [weak self] startSize, distance in
+                self?.settings.customIconSize = AppSettings.customIconSize(resizingFrom: Double(startSize), by: distance)
+            }
+        )
         panel.setRootView(rootView, container: dropView)
         return panel
     }
@@ -86,8 +96,19 @@ final class CustomDockController {
             offset: settings.customOffset,
             inset: edgeInsetProvider?(screen, edge) ?? 0
         )
-        panel.place(frame: NSRect(origin: origin, size: layout.panelSize), edge: edge, screenFrame: screen.frame)
-        panel.setAutoHide(enabled: settings.customAutoHide, delay: settings.customAutoHideDelay)
+        panel.update(
+            frame: NSRect(origin: origin, size: layout.panelSize),
+            edge: edge,
+            screenFrame: screen.frame,
+            visibility: visibility
+        )
+    }
+
+    /// An empty Custom Dock stays out of sight and only slides in as a drop target
+    /// when something is dragged to its edge.
+    private var visibility: DockVisibility {
+        if viewModel.items.isEmpty { return .revealWhileDragging }
+        return settings.customAutoHide ? .autoHide : .pinned
     }
 
     // MARK: Adding items
@@ -103,9 +124,12 @@ final class CustomDockController {
         openPanel.directoryURL = URL(fileURLWithPath: "/Applications")
         NSApp.activate()
         guard openPanel.runModal() == .OK else { return }
-        viewModel.addItems(from: openPanel.urls)
         if !settings.customEnabled {
             settings.customEnabled = true
+        }
+        if viewModel.addItems(from: openPanel.urls) > 0 {
+            // A hidden dock would give no sign anything happened; show where the items went.
+            panel?.peek()
         }
     }
 

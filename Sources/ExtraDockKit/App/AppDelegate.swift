@@ -7,7 +7,7 @@ import SwiftUI
 /// on other displays) and the Custom Dock (a dock you fill yourself).
 @MainActor
 public final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
-    private let settings = AppSettings()
+    private let settings = AppSettings(systemDockAutoHides: DockConfigReader.parse().autoHides)
     private let runningApps = RunningAppsMonitor()
     private let launchService = LaunchService()
     private var mirrorDock: MirrorDockController?
@@ -45,13 +45,13 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate 
 
         setupStatusItem()
         NotificationCenter.default.addObserver(
-            self, selector: #selector(refreshDocks), name: .extraDockSettingsChanged, object: settings
+            self, selector: #selector(settingsChanged), name: .extraDockSettingsChanged, object: settings
         )
         NotificationCenter.default.addObserver(
-            self, selector: #selector(refreshDocks),
+            self, selector: #selector(screensChanged),
             name: NSApplication.didChangeScreenParametersNotification, object: nil
         )
-        refreshDocks()
+        screensChanged()
     }
 
     /// Opening the app again (e.g. from Finder or Spotlight) shows Settings, which
@@ -61,8 +61,13 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate 
         return false
     }
 
-    @objc private func refreshDocks() {
+    @objc private func settingsChanged() {
         mirrorDock?.refresh()
+        customDock?.refresh()
+    }
+
+    @objc private func screensChanged() {
+        mirrorDock?.refresh(locateSystemDock: true)
         customDock?.refresh()
     }
 

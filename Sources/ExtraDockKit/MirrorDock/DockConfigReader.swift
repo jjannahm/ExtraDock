@@ -8,6 +8,8 @@ struct SystemDockConfiguration {
     var items: [MirrorDockItem]
     var tileSize: CGFloat
     var edge: DockEdge
+    /// "Automatically hide and show the Dock"
+    var autoHides = false
 
     static let empty = SystemDockConfiguration(items: [], tileSize: DockConfigReader.defaultTileSize, edge: .bottom)
 }
@@ -71,7 +73,8 @@ struct DockConfigReader {
             }
         }
 
-        return SystemDockConfiguration(items: items, tileSize: tileSize, edge: edge)
+        let autoHides = (plist["autohide"] as? NSNumber)?.boolValue ?? false
+        return SystemDockConfiguration(items: items, tileSize: tileSize, edge: edge, autoHides: autoHides)
     }
 
     // MARK: - Private helpers

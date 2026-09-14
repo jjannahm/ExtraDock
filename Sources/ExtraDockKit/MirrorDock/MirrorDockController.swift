@@ -43,24 +43,28 @@ final class MirrorDockController {
 
     // MARK: Refresh
 
-    /// Applies settings and the current display arrangement.
-    func refresh() {
+    /// Applies settings and the current display arrangement. Pass `locateSystemDock`
+    /// when displays or the Dock may have moved; settings changes (such as dragging
+    /// to resize, many times a second) skip that lookup.
+    func refresh(locateSystemDock: Bool = false) {
+        let wasRunning = servicesRunning
         if settings.mirrorEnabled {
             startServices()
         } else {
             stopServices()
         }
-        systemDockDisplayKey = SystemDockLocator.displayKey(orientation: dockState.edge)
+        if locateSystemDock || !wasRunning {
+            systemDockDisplayKey = SystemDockLocator.displayKey(orientation: dockState.edge)
+        }
         let screens = settings.mirrorEnabled ? NSScreen.screens.filter(shouldMirror(on:)) : []
 
         var wantedKeys = Set<String>()
         for screen in screens {
             guard let key = DisplayIdentity.key(for: screen) else { continue }
             wantedKeys.insert(key)
-            let panel = panels[key] ?? MirrorDockPanel(dockState: dockState, launchService: launchService)
+            let panel = panels[key] ?? MirrorDockPanel(dockState: dockState, launchService: launchService, settings: settings)
             panels[key] = panel
-            panel.layout(on: screen, scale: settings.mirrorScale)
-            panel.setAutoHide(enabled: settings.mirrorAutoHide, delay: settings.mirrorAutoHideDelay)
+            panel.layout(on: screen, scale: settings.mirrorScale, autoHide: settings.mirrorAutoHide)
         }
         for (key, panel) in panels where !wantedKeys.contains(key) {
             panel.close()
@@ -79,7 +83,7 @@ final class MirrorDockController {
         dockState.apply(DockConfigReader.parse())
         dockState.updateRunningApps(runningApps.runningBundleIDs)
         dockState.updateBadges(badgeReader.badges)
-        refresh()
+        refresh(locateSystemDock: true)
     }
 
     func shouldMirror(on screen: NSScreen) -> Bool {
@@ -121,6 +125,6 @@ final class MirrorDockController {
     private func checkSystemDockLocation() {
         guard NSScreen.screens.count > 1,
               SystemDockLocator.displayKey(orientation: dockState.edge) != systemDockDisplayKey else { return }
-        refresh()
+        refresh(locateSystemDock: true)
     }
 }
