@@ -115,4 +115,44 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertTrue(reloaded.isMirrorEnabled(onDisplay: "main", hasSystemDock: true))
         XCTAssertFalse(reloaded.isMirrorEnabled(onDisplay: "external", hasSystemDock: false))
     }
+
+    // MARK: Only with an external display
+
+    func testExternalDisplayRequirementIsOffByDefault() {
+        let settings = makeSettings()
+        XCTAssertFalse(settings.mirrorOnlyWithExternalDisplay)
+        XCTAssertFalse(settings.customOnlyWithExternalDisplay)
+        XCTAssertTrue(settings.isMirrorDockActive(externalDisplayConnected: false))
+        XCTAssertTrue(settings.isCustomDockActive(externalDisplayConnected: false))
+    }
+
+    func testDockWaitsForExternalDisplayWhenRequired() {
+        let settings = makeSettings()
+        settings.customOnlyWithExternalDisplay = true
+        XCTAssertFalse(settings.isCustomDockActive(externalDisplayConnected: false))
+        XCTAssertTrue(settings.isCustomDockActive(externalDisplayConnected: true))
+        // The other dock is unaffected.
+        XCTAssertTrue(settings.isMirrorDockActive(externalDisplayConnected: false))
+
+        settings.mirrorOnlyWithExternalDisplay = true
+        XCTAssertFalse(settings.isMirrorDockActive(externalDisplayConnected: false))
+        XCTAssertTrue(settings.isMirrorDockActive(externalDisplayConnected: true))
+    }
+
+    func testTurnedOffDockStaysOffEvenWithExternalDisplay() {
+        let settings = makeSettings()
+        settings.customEnabled = false
+        settings.mirrorEnabled = false
+        XCTAssertFalse(settings.isCustomDockActive(externalDisplayConnected: true))
+        XCTAssertFalse(settings.isMirrorDockActive(externalDisplayConnected: true))
+    }
+
+    func testExternalDisplayRequirementPersists() {
+        let settings = makeSettings()
+        settings.mirrorOnlyWithExternalDisplay = true
+        settings.customOnlyWithExternalDisplay = true
+        let reloaded = makeSettings()
+        XCTAssertTrue(reloaded.mirrorOnlyWithExternalDisplay)
+        XCTAssertTrue(reloaded.customOnlyWithExternalDisplay)
+    }
 }

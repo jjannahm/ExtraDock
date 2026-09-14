@@ -48,7 +48,10 @@ final class MirrorDockController {
     /// to resize, many times a second) skip that lookup.
     func refresh(locateSystemDock: Bool = false) {
         let wasRunning = servicesRunning
-        if settings.mirrorEnabled {
+        let isActive = settings.isMirrorDockActive(
+            externalDisplayConnected: DisplayIdentity.isExternalDisplayConnected
+        )
+        if isActive {
             startServices()
         } else {
             stopServices()
@@ -56,7 +59,7 @@ final class MirrorDockController {
         if locateSystemDock || !wasRunning {
             systemDockDisplayKey = SystemDockLocator.displayKey(orientation: dockState.edge)
         }
-        let screens = settings.mirrorEnabled ? NSScreen.screens.filter(shouldMirror(on:)) : []
+        let screens = isActive ? NSScreen.screens.filter(shouldMirror(on:)) : []
 
         var wantedKeys = Set<String>()
         for screen in screens {

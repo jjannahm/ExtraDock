@@ -86,17 +86,17 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate 
 
     public func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
+        let externalDisplayConnected = DisplayIdentity.isExternalDisplayConnected
 
         let mirrorItem = ClosureMenuItem("Mirror Dock") { [weak self] in
             self?.settings.mirrorEnabled.toggle()
         }
         mirrorItem.state = settings.mirrorEnabled ? .on : .off
         menu.addItem(mirrorItem)
-        if settings.mirrorEnabled, mirrorDock?.isMirroringAnyDisplay == false {
-            let hint = NSMenuItem(title: "Not shown on any display — see Settings", action: nil, keyEquivalent: "")
-            hint.isEnabled = false
-            hint.indentationLevel = 1
-            menu.addItem(hint)
+        if settings.mirrorEnabled && !settings.isMirrorDockActive(externalDisplayConnected: externalDisplayConnected) {
+            menu.addItem(hintItem("Shows when an external display is connected"))
+        } else if settings.mirrorEnabled, mirrorDock?.isMirroringAnyDisplay == false {
+            menu.addItem(hintItem("Not shown on any display — see Settings"))
         }
 
         let customItem = ClosureMenuItem("Custom Dock") { [weak self] in
@@ -104,6 +104,9 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate 
         }
         customItem.state = settings.customEnabled ? .on : .off
         menu.addItem(customItem)
+        if settings.customEnabled && !settings.isCustomDockActive(externalDisplayConnected: externalDisplayConnected) {
+            menu.addItem(hintItem("Shows when an external display is connected"))
+        }
 
         menu.addItem(.separator())
         menu.addItem(ClosureMenuItem("Add to Custom Dock…") { [weak self] in
@@ -125,6 +128,13 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate 
             self?.openSettings()
         })
         menu.addItem(NSMenuItem(title: "Quit ExtraDock", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+    }
+
+    private func hintItem(_ title: String) -> NSMenuItem {
+        let hint = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        hint.isEnabled = false
+        hint.indentationLevel = 1
+        return hint
     }
 
     // MARK: - Settings Window

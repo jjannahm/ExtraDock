@@ -9,6 +9,7 @@ struct CustomDockSettingsView: View {
     let addItems: () -> Void
 
     @State private var displays: [(key: String, name: String)] = CustomDockSettingsView.currentDisplays()
+    @State private var externalDisplayConnected = DisplayIdentity.isExternalDisplayConnected
 
     var body: some View {
         Form {
@@ -80,10 +81,11 @@ struct CustomDockSettingsView: View {
 
             Section {
                 Toggle("Automatically hide and show the Custom Dock", isOn: $settings.customAutoHide)
+                Toggle("Only show when an external display is connected", isOn: $settings.customOnlyWithExternalDisplay)
             } header: {
                 Text("Behavior")
             } footer: {
-                Text("Like the system Dock: it stays out of sight until you move the pointer to the screen edge. Drag the dock's inner edge to resize it.")
+                Text(behaviorFooter)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -91,7 +93,17 @@ struct CustomDockSettingsView: View {
         .formStyle(.grouped)
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in
             displays = Self.currentDisplays()
+            externalDisplayConnected = DisplayIdentity.isExternalDisplayConnected
         }
+    }
+
+    private var behaviorFooter: String {
+        var text = "Like the system Dock: it stays out of sight until you move the pointer to the screen edge. "
+            + "Drag the dock's inner edge to resize it."
+        if settings.customOnlyWithExternalDisplay && !externalDisplayConnected {
+            text += " No external display is connected, so the Custom Dock is off for now."
+        }
+        return text
     }
 
     private static func currentDisplays() -> [(key: String, name: String)] {

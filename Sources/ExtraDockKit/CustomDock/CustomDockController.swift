@@ -27,7 +27,7 @@ final class CustomDockController {
 
     /// Applies current settings: creates or removes the panel, then lays it out.
     func refresh() {
-        guard settings.customEnabled else {
+        guard settings.isCustomDockActive(externalDisplayConnected: DisplayIdentity.isExternalDisplayConnected) else {
             panel?.close()
             panel = nil
             return

@@ -26,4 +26,16 @@ enum DisplayIdentity {
     static var primaryScreen: NSScreen? {
         NSScreen.screens.first
     }
+
+    /// True for a laptop's own screen.
+    static func isBuiltIn(_ screen: NSScreen) -> Bool {
+        guard let id = displayID(for: screen) else { return false }
+        return CGDisplayIsBuiltin(id) != 0
+    }
+
+    /// Whether any display other than the built-in one is connected (a monitor,
+    /// AirPlay, or Sidecar), including when a laptop runs with its lid closed.
+    static var isExternalDisplayConnected: Bool {
+        NSScreen.screens.contains { !isBuiltIn($0) }
+    }
 }

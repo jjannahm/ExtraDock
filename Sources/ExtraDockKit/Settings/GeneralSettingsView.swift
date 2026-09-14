@@ -62,6 +62,20 @@ struct GeneralSettingsView: View {
                     BadgeReader.requestAccessibilityPermission()
                 }
             }
+            VStack(alignment: .leading, spacing: 6) {
+                // Installs from install.sh are signed ad hoc, so macOS ties the permission to one build.
+                Text("Already switched on in System Settings? Updating ExtraDock makes macOS treat it as a new app. Select ExtraDock in the Accessibility list, remove it with –, then click Allow Access… again.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button("Open Accessibility Settings") {
+                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+                .buttonStyle(.link)
+                .font(.caption)
+            }
         }
     }
 

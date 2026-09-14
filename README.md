@@ -28,6 +28,8 @@ A macOS menu bar app with two extra docks:
 ### Hiding
 Both docks can hide like the system Dock: out of sight until you rest the pointer at the screen edge, then they slide in and slide away shortly after the pointer leaves. They follow your Dock's "Automatically hide and show the Dock" setting until you change it in ExtraDock's Settings. The pointer has to pause at the edge briefly, so moving onto a neighboring display doesn't open them.
 
+Each dock also has **Only show when an external display is connected**: turn it on to keep that dock away while you use a laptop on its own. It comes back as soon as you connect a monitor (or AirPlay/Sidecar display), including with the lid closed.
+
 ### Both
 - One menu bar icon to toggle each dock, add items, and open Settings
 - Frosted glass look, launch at login, no Dock icon of its own
@@ -66,7 +68,7 @@ open Package.swift   # work in Xcode
 
 The Mirror Dock reads badges and the Dock's right-click menus through the Accessibility API. macOS asks for permission the first time a Mirror Dock appears; you can also grant it later from Settings › General. Everything else works without it.
 
-Because `install.sh` signs the app ad hoc, macOS treats each rebuild as a new app. After reinstalling, turn ExtraDock off and on again in System Settings › Privacy & Security › Accessibility.
+Because `install.sh` signs the app ad hoc, macOS treats each rebuild as a new app, and the switch in System Settings keeps pointing at the old build (it still looks on). After reinstalling, select ExtraDock in System Settings › Privacy & Security › Accessibility, remove it with **–**, then click **Allow Access…** in ExtraDock's Settings › General.
 
 ## How It Works
 

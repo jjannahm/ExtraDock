@@ -13,6 +13,7 @@ struct MirrorDockSettingsView: View {
     let dockState: MirrorDockState
 
     @State private var displays: [DisplayEntry] = []
+    @State private var externalDisplayConnected = DisplayIdentity.isExternalDisplayConnected
 
     var body: some View {
         Form {
@@ -62,10 +63,11 @@ struct MirrorDockSettingsView: View {
 
             Section {
                 Toggle("Automatically hide and show the Mirror Dock", isOn: $settings.mirrorAutoHide)
+                Toggle("Only show when an external display is connected", isOn: $settings.mirrorOnlyWithExternalDisplay)
             } header: {
                 Text("Behavior")
             } footer: {
-                Text("Like the system Dock: it stays out of sight until you move the pointer to the screen edge.")
+                Text(behaviorFooter)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -79,11 +81,20 @@ struct MirrorDockSettingsView: View {
         }
     }
 
+    private var behaviorFooter: String {
+        var text = "Like the system Dock: it stays out of sight until you move the pointer to the screen edge."
+        if settings.mirrorOnlyWithExternalDisplay && !externalDisplayConnected {
+            text += " No external display is connected, so the Mirror Dock is off for now."
+        }
+        return text
+    }
+
     private func reloadDisplays() {
         let dockDisplay = SystemDockLocator.displayKey(orientation: dockState.edge)
         displays = NSScreen.screens.compactMap { screen in
             guard let key = DisplayIdentity.key(for: screen) else { return nil }
             return DisplayEntry(id: key, name: screen.localizedName, hasSystemDock: key == dockDisplay)
         }
+        externalDisplayConnected = DisplayIdentity.isExternalDisplayConnected
     }
 }

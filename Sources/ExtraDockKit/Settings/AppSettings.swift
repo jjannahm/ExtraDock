@@ -32,6 +32,10 @@ public final class AppSettings {
     var mirrorScale: Double { didSet { store(mirrorScale, for: Keys.mirrorScale) } }
     /// Slide out of sight until the pointer reaches the screen edge, like the system Dock.
     var mirrorAutoHide: Bool { didSet { store(mirrorAutoHide, for: Keys.mirrorAutoHide) } }
+    /// Keep the Mirror Dock away unless an external display is connected.
+    var mirrorOnlyWithExternalDisplay: Bool {
+        didSet { store(mirrorOnlyWithExternalDisplay, for: Keys.mirrorOnlyWithExternalDisplay) }
+    }
 
     // MARK: Custom Dock
 
@@ -50,6 +54,10 @@ public final class AppSettings {
         didSet { store(customMagnificationScale, for: Keys.customMagnificationScale) }
     }
     var customAutoHide: Bool { didSet { store(customAutoHide, for: Keys.customAutoHide) } }
+    /// Keep the Custom Dock away unless an external display is connected.
+    var customOnlyWithExternalDisplay: Bool {
+        didSet { store(customOnlyWithExternalDisplay, for: Keys.customOnlyWithExternalDisplay) }
+    }
 
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let notificationCenter: NotificationCenter
@@ -68,6 +76,7 @@ public final class AppSettings {
         mirrorDisplays = Self.readBoolDictionary(defaults, Keys.mirrorDisplays)
         mirrorScale = Self.read(defaults, Keys.mirrorScale, default: 1.0, in: Self.mirrorScaleRange)
         mirrorAutoHide = defaults.object(forKey: Keys.mirrorAutoHide) as? Bool ?? systemDockAutoHides
+        mirrorOnlyWithExternalDisplay = defaults.object(forKey: Keys.mirrorOnlyWithExternalDisplay) as? Bool ?? false
 
         customEnabled = defaults.object(forKey: Keys.customEnabled) as? Bool ?? true
         customDisplay = defaults.string(forKey: Keys.customDisplay) ?? ""
@@ -83,6 +92,19 @@ public final class AppSettings {
             defaults, Keys.customMagnificationScale, default: 1.5, in: Self.magnificationScaleRange
         )
         customAutoHide = defaults.object(forKey: Keys.customAutoHide) as? Bool ?? systemDockAutoHides
+        customOnlyWithExternalDisplay = defaults.object(forKey: Keys.customOnlyWithExternalDisplay) as? Bool ?? false
+    }
+
+    // MARK: When each dock is active
+
+    /// Whether the Mirror Dock should run, given the displays connected right now.
+    func isMirrorDockActive(externalDisplayConnected: Bool) -> Bool {
+        mirrorEnabled && (externalDisplayConnected || !mirrorOnlyWithExternalDisplay)
+    }
+
+    /// Whether the Custom Dock should be on screen, given the displays connected right now.
+    func isCustomDockActive(externalDisplayConnected: Bool) -> Bool {
+        customEnabled && (externalDisplayConnected || !customOnlyWithExternalDisplay)
     }
 
     // MARK: Resizing by dragging
@@ -140,6 +162,7 @@ public final class AppSettings {
         static let mirrorDisplays = "mirror.displays"
         static let mirrorScale = "mirror.scale"
         static let mirrorAutoHide = "mirror.autoHide"
+        static let mirrorOnlyWithExternalDisplay = "mirror.onlyWithExternalDisplay"
         static let customEnabled = "custom.enabled"
         static let customDisplay = "custom.display"
         static let customEdge = "custom.edge"
@@ -152,5 +175,6 @@ public final class AppSettings {
         static let customMagnification = "custom.magnification"
         static let customMagnificationScale = "custom.magnificationScale"
         static let customAutoHide = "custom.autoHide"
+        static let customOnlyWithExternalDisplay = "custom.onlyWithExternalDisplay"
     }
 }
