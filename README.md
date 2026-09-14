@@ -5,10 +5,6 @@ A macOS menu bar app with two extra docks:
 - **Mirror Dock** — macOS only shows the Dock on one display at a time. The Mirror Dock renders a faithful, interactive copy of it on your other displays.
 - **Custom Dock** — a separate floating dock that holds whatever you put in it: apps, files, folders, and web links.
 
-This repository merges two open-source projects, with both histories preserved:
-[henningziech/extradock](https://github.com/henningziech/extradock) (Mirror Dock) and
-[johnnyclem/anotherdock](https://github.com/johnnyclem/anotherdock) (Custom Dock).
-
 ## Features
 
 ### Mirror Dock
