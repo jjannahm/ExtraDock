@@ -25,6 +25,7 @@ rm -rf "$APP_PATH"
 mkdir -p "$APP_PATH/Contents/MacOS" "$APP_PATH/Contents/Resources"
 cp "$BIN_DIR/$APP_NAME" "$APP_PATH/Contents/MacOS/$APP_NAME"
 cp "$ROOT/Resources/Info.plist" "$APP_PATH/Contents/Info.plist"
+cp "$ROOT/Resources/AppIcon.icns" "$APP_PATH/Contents/Resources/AppIcon.icns"
 printf 'APPL????' > "$APP_PATH/Contents/PkgInfo"
 
 # Ad-hoc signature: lets macOS attach permissions (Accessibility, login item) to the app.

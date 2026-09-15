@@ -56,6 +56,7 @@ cd ExtraDock
 swift build   # debug build
 swift test    # run the test suite
 open Package.swift   # work in Xcode
+swift scripts/make-icon.swift   # redraw Resources/AppIcon.icns after editing the icon script
 ```
 
 ## Usage
